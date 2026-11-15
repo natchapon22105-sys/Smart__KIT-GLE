@@ -44,6 +44,12 @@
           "bluetoothAlwaysPermission": "KIT - GLE ใช้ Bluetooth เพื่อเชื่อมต่อกับนาฬิกาของคุณ"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "KIT - GLE ขอเข้าถึงรูปภาพเพื่อใช้เป็นรูปยาใน MediRemind"
+        }
+      ],
       "expo-secure-store",
       "expo-status-bar"
     ],

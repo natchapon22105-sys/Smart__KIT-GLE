@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS medications (
   user_id    BIGINT UNSIGNED NOT NULL,
   name       VARCHAR(160) NOT NULL,
   dosage     VARCHAR(80) NULL,
-  note       VARCHAR(255) NULL,
+  note       TEXT NULL,                 -- Medication Details
+  image_data MEDIUMTEXT NULL,           -- รูปยา (data URI ขนาดเล็ก) TODO: ย้ายไป object storage เมื่อขึ้น production
   active     TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_med_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

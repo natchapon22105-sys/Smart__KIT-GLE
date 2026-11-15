@@ -55,6 +55,23 @@ export const homeColors = {
   navIcon: '#2A2A2A',
 } as const;
 
+/** สีหน้า MediRemind (ค่าประมาณจากเฟรม Figma — TODO(figma): ซิงก์ค่าจริง) */
+export const mediColors = {
+  pill: 'rgba(58, 138, 90, 0.78)', // ปุ่มย้อนกลับ/หัวข้อด้านซ้าย
+  card: 'rgba(255,255,255,0.14)',
+  cardBorder: 'rgba(255,255,255,0.2)',
+  panel: 'rgba(255,255,255,0.1)',
+  panelBorder: 'rgba(255,255,255,0.16)',
+  field: 'rgba(168,174,172,0.62)',
+  imageBox: 'rgba(190,198,195,0.34)',
+  imageBorder: 'rgba(20,30,25,0.55)',
+  time: '#E9E9E9',
+  glow: 'rgba(255,255,255,0.7)',
+  fab: '#1BF21B',
+  saveGradient: ['#58713A', '#3E8F5E'] as [string, string],
+  upload: 'rgba(190,196,194,0.75)',
+} as const;
+
 export const fonts = {
   // TODO(figma): เปลี่ยนเป็นฟอนต์จริง (โหลดผ่าน expo-font)
   title: undefined as string | undefined,
