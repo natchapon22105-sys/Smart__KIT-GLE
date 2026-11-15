@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "KIT - GLE",
+    "slug": "kit-gle",
+    "version": "0.1.0",
+    "scheme": "kitgle",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/images/logo.png",
+    "backgroundColor": "#222222",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kitgle.app",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "KIT - GLE ใช้ Bluetooth เพื่อเชื่อมต่อกับนาฬิกาของคุณ"
+      }
+    },
+    "android": {
+      "package": "com.kitgle.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#4CD04F"
+      },
+      "permissions": [
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "modes": [
+            "central"
+          ],
+          "bluetoothAlwaysPermission": "KIT - GLE ใช้ Bluetooth เพื่อเชื่อมต่อกับนาฬิกาของคุณ"
+        }
+      ],
+      "expo-secure-store",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {}
+    }
+  }
+}
