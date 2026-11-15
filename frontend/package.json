@@ -30,6 +30,7 @@
     "react-native-ble-plx": "^3.5.0",
     "react-native-safe-area-context": "*",
     "react-native-screens": "*",
+    "react-native-svg": "15.16.0",
     "react-native-web": "*"
   },
   "devDependencies": {

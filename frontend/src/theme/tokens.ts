@@ -85,3 +85,19 @@ export const timing = {
   content: 500,
   progress: 2600,
 };
+
+/** สีหน้า Health status (ค่าประมาณจากเฟรม Figma — TODO(figma): ซิงก์ค่าจริง) */
+export const healthColors = {
+  card: 'rgba(205,210,205,0.17)',
+  cardBorder: 'rgba(255,255,255,0.26)',
+  grid: 'rgba(255,255,255,0.55)',
+  axisText: 'rgba(255,255,255,0.8)',
+  stepsLabel: '#E2661D',
+  stepsBar: '#A9692F',
+  spo2Label: '#17A2E8',
+  spo2Line: ['#14AEF6', '#0A6894'] as [string, string], // บน → ล่าง
+  sleepLabel: '#9A4A86',
+  sleepBar: '#6B0F80',
+  hrLabel: '#8E1010',
+  hrLine: ['#2A0A0A', '#8E1010'] as [string, string], // บน → ล่าง
+} as const;
