@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Logo } from '@/components/Logo';
@@ -10,6 +10,13 @@ import { WatchCard } from '@/components/home/WatchCard';
 import { FeatureGrid } from '@/components/home/FeatureGrid';
 import { useAuth } from '@/services/auth/AuthContext';
 import { useWatch } from '@/hooks/useWatch';
+import {
+  formatLocalDate,
+  getMedicationDoseStatus,
+  getNextMedicationDose,
+  medications,
+  type MedicationDoseLog,
+} from '@/services/medications';
 import { notify } from '@/utils/notify';
 import { homeColors } from '@/theme/tokens';
 
@@ -23,8 +30,80 @@ export default function Home() {
   const { width, height } = useWindowDimensions();
   const { user } = useAuth();
   const watch = useWatch();
+  const [medicationList, setMedicationList] = useState<Awaited<ReturnType<typeof medications.list>> | null>(null);
+  const [doseLogs, setDoseLogs] = useState<MedicationDoseLog[] | null>(null);
+  const [medicationError, setMedicationError] = useState(false);
+  const [doseStatusSaving, setDoseStatusSaving] = useState(false);
+  const [now, setNow] = useState(() => new Date());
 
   const logoSize = Math.min(width, 520) * 0.92;
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setMedicationError(false);
+      setMedicationList(null);
+      setDoseLogs(null);
+      const start = new Date();
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      setNow(start);
+      void Promise.all([
+        medications.list(),
+        medications.listDoseLogs(formatLocalDate(start), formatLocalDate(end)),
+      ])
+        .then(([items, logs]) => {
+          if (active) {
+            setMedicationList(items);
+            setDoseLogs(logs);
+          }
+        })
+        .catch(() => {
+          if (active) setMedicationError(true);
+        });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextDose = useMemo(
+    () => (medicationList && doseLogs ? getNextMedicationDose(medicationList, doseLogs, now) : null),
+    [doseLogs, medicationList, now],
+  );
+  const doseStatus = useMemo(
+    () => (nextDose && doseLogs ? getMedicationDoseStatus(nextDose, doseLogs) : null),
+    [doseLogs, nextDose],
+  );
+
+  const toggleDoseStatus = useCallback(async () => {
+    if (!nextDose || !doseLogs || !doseStatus || doseStatusSaving) return;
+    setDoseStatusSaving(true);
+    try {
+      const nextStatus = doseStatus === 'taken' ? 'pending' : 'taken';
+      const log = await medications.setDoseStatus(nextDose, nextStatus);
+      setDoseLogs((current) =>
+        current
+          ? [
+              ...current.filter(
+                (item) =>
+                  item.scheduleId !== log.scheduleId || item.scheduledAt !== log.scheduledAt,
+              ),
+              log,
+            ]
+          : [log],
+      );
+    } catch (e) {
+      notify('บันทึกสถานะไม่สำเร็จ', e instanceof Error ? e.message : 'เกิดข้อผิดพลาด');
+    } finally {
+      setDoseStatusSaving(false);
+    }
+  }, [doseLogs, doseStatus, doseStatusSaving, nextDose]);
 
   return (
     <View style={styles.root}>
@@ -66,6 +145,13 @@ export default function Home() {
           <FeatureGrid
             steps={watch.health?.steps ?? 0}
             spo2={watch.health?.spo2 ?? 0}
+            nextDose={nextDose}
+            doseStatus={doseStatus}
+            doseStatusSaving={doseStatusSaving}
+            medicationLoading={medicationList === null || doseLogs === null}
+            medicationError={medicationError}
+            now={now}
+            onToggleDoseStatus={toggleDoseStatus}
             onMedi={() => router.push('/(tabs)/medi-remind')}
             onHealth={() => router.push('/(tabs)/health')}
             onChat={() => notify('ยังไม่เปิดใช้งาน', 'ฟีเจอร์ Chat for family ยังไม่เปิดให้ใช้งานในเวอร์ชันนี้')}

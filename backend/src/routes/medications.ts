@@ -35,11 +35,56 @@ const shape = (r: Row) => ({
   enabled: !!r.enabled,
 });
 
-const parseId = (v: string) => (/^\d+$/.test(v) ? Number(v) : null);
+const parseId = (v: string | string[]) => (typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : null);
+
+const dateOnly = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }, 'วันที่ไม่ถูกต้อง');
+
+const doseLogsQuery = z.object({ from: dateOnly, to: dateOnly });
+const doseLogBody = z.object({
+  date: dateOnly,
+  timeOfDay: body.shape.timeOfDay,
+  status: z.enum(['pending', 'taken']),
+});
+
+type DoseLogRow = RowDataPacket & {
+  scheduleId: number;
+  scheduledAt: string;
+  status: 'pending' | 'taken' | 'missed' | 'skipped';
+};
 
 medicationsRouter.get('/', async (req: AuthedRequest, res) => {
   const [rows] = await usersDb.query<Row[]>(`${SELECT} ORDER BY s.time_of_day, m.id`, [req.userId]);
   res.json({ medications: rows.map(shape) });
+});
+
+medicationsRouter.get('/logs', async (req: AuthedRequest, res) => {
+  const parsed = doseLogsQuery.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: 'ช่วงวันที่ไม่ถูกต้อง' });
+  const { from, to } = parsed.data;
+  const span = Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`);
+  if (span < 0 || span > 7 * 24 * 60 * 60 * 1000) {
+    return res.status(400).json({ error: 'เลือกช่วงวันที่ได้ไม่เกิน 8 วัน' });
+  }
+
+  const [rows] = await usersDb.query<DoseLogRow[]>(
+    `SELECT l.schedule_id AS scheduleId,
+            DATE_FORMAT(l.scheduled_at, '%Y-%m-%d %H:%i:%s') AS scheduledAt,
+            l.status
+     FROM medication_logs l
+     JOIN medication_schedules s ON s.id = l.schedule_id
+     JOIN medications m ON m.id = s.medication_id
+     WHERE m.user_id = ? AND m.active = 1
+       AND l.scheduled_at >= ? AND l.scheduled_at < DATE_ADD(?, INTERVAL 1 DAY)
+     ORDER BY l.scheduled_at`,
+    [req.userId, `${from} 00:00:00`, `${to} 00:00:00`],
+  );
+  res.json({ logs: rows });
 });
 
 medicationsRouter.get('/:id', async (req: AuthedRequest, res) => {
@@ -99,6 +144,63 @@ medicationsRouter.put('/:id', async (req: AuthedRequest, res) => {
     ]);
     await conn.commit();
     res.json({ ok: true });
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+});
+
+medicationsRouter.put('/:id/log', async (req: AuthedRequest, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'รหัสไม่ถูกต้อง' });
+  const parsed = doseLogBody.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'ข้อมูลสถานะยาไม่ถูกต้อง' });
+  const { date, timeOfDay, status } = parsed.data;
+  const scheduledAt = `${date} ${timeOfDay}:00`;
+  const conn = await usersDb.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [schedules] = await conn.query<RowDataPacket[]>(
+      `SELECT s.id AS scheduleId
+       FROM medication_schedules s
+       JOIN medications m ON m.id = s.medication_id
+       WHERE m.id = ? AND m.user_id = ? AND m.active = 1
+         AND TIME_FORMAT(s.time_of_day, '%H:%i') = ?
+       AND FIND_IN_SET(
+         CAST(WEEKDAY(?) + 1 AS CHAR CHARACTER SET ascii),
+         CAST(s.days_of_week AS CHAR CHARACTER SET ascii)
+       ) > 0
+       FOR UPDATE`,
+      [id, req.userId, timeOfDay, date],
+    );
+    if (!schedules[0]) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'ไม่พบคิวเวลานี้' });
+    }
+
+    const scheduleId = Number(schedules[0].scheduleId);
+    const [logs] = await conn.query<RowDataPacket[]>(
+      'SELECT id FROM medication_logs WHERE schedule_id = ? AND scheduled_at = ? FOR UPDATE',
+      [scheduleId, scheduledAt],
+    );
+    if (logs[0]) {
+      await conn.query(
+        `UPDATE medication_logs
+         SET status = ?, taken_at = CASE WHEN ? = 'taken' THEN NOW() ELSE NULL END
+         WHERE id = ?`,
+        [status, status, logs[0].id],
+      );
+    } else {
+      await conn.query(
+        `INSERT INTO medication_logs (schedule_id, scheduled_at, taken_at, status)
+         VALUES (?, ?, CASE WHEN ? = 'taken' THEN NOW() ELSE NULL END, ?)`,
+        [scheduleId, scheduledAt, status, status],
+      );
+    }
+    await conn.commit();
+    res.json({ scheduleId, scheduledAt, status });
   } catch (e) {
     await conn.rollback();
     throw e;

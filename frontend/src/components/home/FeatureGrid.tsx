@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassPanel } from './GlassPanel';
+import type { MedicationDoseStatus, UpcomingMedicationDose } from '@/services/medications';
 import { homeColors } from '@/theme/tokens';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -54,15 +55,31 @@ function AvatarStack() {
 }
 
 const pad = (n: number, len: number) => String(Math.max(0, Math.round(n))).padStart(len, '0');
+const WEEKDAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+
+function formatDoseDate(date: Date, now: Date) {
+  const dayStart = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+  const dayOffset = Math.round((dayStart(date) - dayStart(now)) / 86_400_000);
+  if (dayOffset === 0) return 'วันนี้';
+  if (dayOffset === 1) return 'พรุ่งนี้';
+  return `${WEEKDAYS[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1}`;
+}
 
 /**
  * ช่อง 4 ฟีเจอร์ในแผงขอบเขียวอมฟ้า (ตาม Figma): MediRemind · Health status · Chat for family · Family Link
  * - Health status ใช้ค่าจริงจากนาฬิกา (หรือจำลอง); เป้าหมายก้าวสำหรับหลอดแถบ = 10,000
- * - MediRemind / Chat / Family แสดงโครงตามดีไซน์ก่อน (ยังไม่มีข้อมูลจริง) — TODO ต่อ /api/medications และ /api/family
+ * - MediRemind แสดงคิวยาที่จะถึงจาก /api/medications; Chat / Family ยังเป็นโครงตามดีไซน์
  */
 export function FeatureGrid({
   steps,
   spo2,
+  nextDose,
+  doseStatus,
+  doseStatusSaving,
+  medicationLoading,
+  medicationError,
+  now,
+  onToggleDoseStatus,
   onMedi,
   onHealth,
   onChat,
@@ -70,28 +87,79 @@ export function FeatureGrid({
 }: {
   steps: number;
   spo2: number;
+  nextDose: UpcomingMedicationDose | null;
+  doseStatus: MedicationDoseStatus | null;
+  doseStatusSaving: boolean;
+  medicationLoading: boolean;
+  medicationError: boolean;
+  now: Date;
+  onToggleDoseStatus: () => void;
   onMedi: () => void;
   onHealth: () => void;
   onChat: () => void;
   onFamily: () => void;
 }) {
+  const doseSubtitle = medicationError
+    ? 'โหลดคิวไม่สำเร็จ'
+    : medicationLoading
+      ? 'กำลังโหลดคิวยา...'
+      : nextDose
+        ? `${formatDoseDate(nextDose.scheduledAt, now)}${nextDose.medication.details ? ` · ${nextDose.medication.details}` : ''}`
+        : 'ยังไม่มีรายการยาที่จะถึง';
+
   return (
     <GlassPanel radius={30} border={homeColors.panelBorder} style={styles.panel}>
       <View style={styles.grid}>
         <Tile icon="time-outline" title="MediRemind" onPress={onMedi}>
-          <Text style={styles.clock}>00 : 00</Text>
+          <Text style={styles.clock}>
+            {nextDose
+              ? `${pad(nextDose.scheduledAt.getHours(), 2)} : ${pad(nextDose.scheduledAt.getMinutes(), 2)}`
+              : '00 : 00'}
+          </Text>
           <View style={styles.detailBox}>
-            <Text style={styles.detailText}>Medication Details :</Text>
+            <Text style={styles.detailText} numberOfLines={1}>
+              {nextDose ? nextDose.medication.name : 'Medication Details :'}
+            </Text>
+            <Text style={styles.detailSubText} numberOfLines={1}>
+              {doseSubtitle}
+            </Text>
           </View>
-          <View style={styles.mediRow}>
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation();
+              onToggleDoseStatus();
+            }}
+            disabled={!nextDose || !doseStatus || doseStatusSaving || medicationLoading || medicationError}
+            accessibilityRole="button"
+            accessibilityLabel={
+              doseStatus === 'taken'
+                ? 'กินยาแล้ว แตะเพื่อยกเลิกสถานะ'
+                : 'ยังไม่ได้กินยา แตะเพื่อบันทึกว่ากินแล้ว'
+            }
+            style={styles.mediRow}
+          >
             <LinearGradient
-              colors={['#0EAA68', '#25D77B']}
+              colors={
+                doseStatus === 'taken'
+                  ? ['#0EAA68', '#25D77B']
+                  : doseStatus === 'pending'
+                    ? ['#D64A4A', '#FF1E1E']
+                    : ['#777777', '#999999']
+              }
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.mediBar}
             />
-            <View style={styles.mediDot} />
-          </View>
+            <View
+              style={[
+                styles.mediDot,
+                {
+                  backgroundColor:
+                    doseStatus === 'taken' ? homeColors.medi : doseStatus ? homeColors.danger : '#999999',
+                },
+              ]}
+            />
+          </Pressable>
         </Tile>
 
         <Tile icon="stats-chart" title="Health status" onPress={onHealth}>
@@ -160,14 +228,16 @@ const styles = StyleSheet.create({
     marginTop: 6,
     height: 34,
     padding: 4,
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
   detailText: { fontSize: 8, fontWeight: '800', color: homeColors.textMain },
+  detailSubText: { marginTop: 2, fontSize: 7, color: homeColors.textDim },
   mediRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   mediBar: { flex: 1, height: 9, borderRadius: 5 },
-  mediDot: { width: 12, height: 12, borderRadius: 6, marginLeft: 4, backgroundColor: homeColors.medi },
+  mediDot: { width: 12, height: 12, borderRadius: 6, marginLeft: 4 },
 
   metricHead: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   metricDot: { width: 9, height: 9, borderRadius: 5 },

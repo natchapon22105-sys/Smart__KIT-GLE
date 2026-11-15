@@ -12,4 +12,4 @@ api.use('/devices', devicesRouter);
 api.use('/health', healthRouter);
 api.use('/family', familyRouter);
 api.use('/medications', medicationsRouter);
-// TODO: medication_logs (บันทึกการกินยาจากนาฬิกา) — ดู docs/HANDOFF.md
+// TODO: ingest medication_logs from the watch after the BLE protocol is defined.

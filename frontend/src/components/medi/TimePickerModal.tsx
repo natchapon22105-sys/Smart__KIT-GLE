@@ -8,7 +8,7 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 const ROW = 46;
 
 function Column({ items, value, onPick }: { items: number[]; value: number; onPick: (n: number) => void }) {
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<React.ComponentRef<typeof ScrollView>>(null);
   useEffect(() => {
     const t = setTimeout(() => ref.current?.scrollTo({ y: Math.max(value * ROW - ROW, 0), animated: false }), 30);
     return () => clearTimeout(t);

@@ -62,7 +62,7 @@ kit-gle/
   - ใช้แพ็กเกจใหม่ `expo-image-picker` (ต้อง `npx expo install expo-image-picker` / `npx expo install --fix`) — เพิ่ม plugin ใน app.json แล้ว (iOS ต้อง rebuild dev build ถ้าไม่ใช้ Expo Go)
   - ส่วนที่ "ไม่มีใน Figma" และเพิ่มเอง (ติด TODO(figma)): ปุ่มลบ (ลิงก์ "ลบรายการยานี้" หน้าแก้ไข), ข้อความสถานะว่าง, ตัวเลือกเวลาแบบ modal, ตัวเลือกวันแบบ chip ขยายใต้ช่อง Select Days
   - หลังบันทึก/ลบ จะ sync ตารางเตือนไปนาฬิกาผ่าน `syncMedicationAlarms` เฉพาะตอนเชื่อมต่ออยู่ (ยังไม่ส่ง "วัน" เพราะ protocol ยังไม่กำหนด)
-  - Health status แสดงก้าว/SpO2 จริงจากนาฬิกา (หรือโหมดจำลอง) — MediRemind/Chat/Family ยังเป็นโครงตามดีไซน์ ไม่มีข้อมูลจริง
+  - Home แสดงคิวยา MediRemind ถัดไปในการ์ดดีไซน์เดิม (วัน/เวลาในเครื่อง); แตะแถบสีเพื่อบันทึก/ยกเลิกสถานะกินยา (`GET /api/medications/logs`, `PUT /api/medications/:id/log`) และโหลดข้อมูลใหม่เมื่อกลับหน้า Home — Chat/Family ยังเป็นโครงตามดีไซน์ ไม่มีข้อมูลจริง
   - ส่วนที่ **ไม่มีใน Figma** แล้วผมเพิ่มพื้นฐาน: ข้อความ/ปุ่มสถานะกำลังค้นหา-เชื่อมต่อแล้ว-ผิดพลาด ของการ์ดนาฬิกา, หน้าโปรไฟล์ (placeholder + ปุ่มออกจากระบบชั่วคราว), ปุ่ม Chat for family แสดงแค่ "ยังไม่เปิดใช้งาน"
   - ไอคอนทั้งหมดเป็น Ionicons ชั่วคราว (TODO(figma): ใช้ไอคอนจริง), เบลอกระจกใช้ `backdrop-filter` บนเว็บเท่านั้น (บนมือถือเป็นสีโปร่งแสง — ถ้าต้องการเบลอจริงใช้ `expo-blur`), สีอยู่ใน `theme/tokens.ts › homeColors` (ค่าประมาณ)
 - **ระบบสมัคร/เข้าสู่ระบบ (ใช้งานจริง)**: Sign In (อีเมลหรือชื่อผู้ใช้ + รหัสผ่าน), Sign Up (อีเมล, ชื่อผู้ใช้, รหัสผ่าน, ยืนยันรหัสผ่าน, ต้องกดยอมรับ Privacy Policy : PDPA ก่อน), หน้า Privacy → Confirm
@@ -78,7 +78,7 @@ kit-gle/
 ### ยังไม่ได้ทำ / ต้องทำต่อ (เรียงตามความสำคัญ)
 1. **รอลิงก์ไฟล์ Figma จากเจ้าของ** → ใช้ Figma MCP (`create_session` → `get_design_context` → `get_screenshot`, `get_variable_defs`) สร้างหน้า home / MediRemind / Health / Family Link / Device ให้ตรง Figma 1:1 แล้วลบ `PendingScreen`; ซิงก์ `theme/tokens.ts` (สี, ฟอนต์, ขนาด) กับ Figma จริง
 2. **โปรโตคอล BLE ของนาฬิกา** — เจ้าของ "ยังไม่มีเอกสาร" ตอนนี้ UUID และรูปแบบ payload ใน `protocol.ts` / `RealBleService.ts` / seed SQL เป็น **PLACEHOLDER** ถามเจ้าของ (service/characteristic UUID, รูปไบต์) แล้วแก้ 3 ที่นี้ให้ตรงกัน
-3. Backend: `medication_logs` (บันทึกการกินยา) — CRUD `/api/medications` ทำแล้ว;, refresh token, rate limit, migration tool (ตอนนี้ใช้ไฟล์ .sql ตรง ๆ)
+3. Backend: เชื่อม `medication_logs` จากนาฬิกาหลังมี BLE protocol — สถานะที่บันทึกจากแอปผ่าน MediRemind แล้ว; refresh token, rate limit, migration tool (ตอนนี้ใช้ไฟล์ .sql ตรง ๆ)
 4. Auth ส่วนที่ยังขาด: **Facebook/Google login** (ปุ่มมีแต่ยังแจ้ง "ยังไม่เปิดใช้งาน" — ต้องมี Facebook App / Google OAuth Client ID ก่อน), **ลืมรหัสผ่าน / ยืนยันอีเมล** (ไม่มีใน Figma → ถามเจ้าของก่อน), refresh token, เนื้อหา Privacy Policy จริง (ตอนนี้เป็นฉบับร่างใน `src/content/privacyPolicy.ts` ต้องให้ผู้รับผิดชอบ/กฎหมายตรวจ; แก้แล้วเปลี่ยน PRIVACY_VERSION ทั้งสองฝั่งให้ตรงกัน)
 5. ฟอนต์จริง (expo-font), โลโก้จริงแทน NudMedi, app icon/splash ของ native (ตอนนี้ icon = logo.png)
 6. ขอสิทธิ์ BLE runtime บน Android 12+ (`BLUETOOTH_SCAN/CONNECT`) — ใส่ใน app.json แล้ว แต่ยังไม่มี flow ขอสิทธิ์ใน UI
@@ -100,6 +100,7 @@ kit-gle/
 cd backend && cp .env.example .env   # ใส่ DB_PASSWORD, JWT_SECRET
 npm install && npm run dev           # http://localhost:4000/api/ping
 # ถ้าเคยรัน 01_schema_users.sql เวอร์ชันเก่าไปแล้ว (ตาราง users ไม่มี username) ให้รัน database/migrations/001_add_username_pdpa.sql ด้วย
+# ถ้าฐานข้อมูลมีตาราง medications อยู่แล้วแต่ยังไม่มี image_data ให้รัน database/migrations/002_medication_details_image.sql ด้วย
 # 3) Frontend
 cd frontend && cp .env.example .env   # EXPO_PUBLIC_API_URL: เว็บ=http://localhost:4000 | Android emulator=http://10.0.2.2:4000 | มือถือจริง=http://<IP คอม>:4000
 npm install && npx expo install --fix
