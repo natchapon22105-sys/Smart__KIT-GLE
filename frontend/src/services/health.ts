@@ -1,4 +1,5 @@
 import { api } from '@/services/api/client';
+import type { HealthSample } from '@/services/ble';
 
 /** แถวจาก GET /api/health/records (เรียงใหม่ → เก่า) */
 export type HealthRecord = {
@@ -9,8 +10,24 @@ export type HealthRecord = {
   recorded_at: string;
 };
 
+const int = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? undefined : Math.round(v));
+
 export const healthApi = {
   records: async () => (await api.get<{ records: HealthRecord[] }>('/health/records')).records,
+  /** ส่งค่าจากนาฬิกาเข้า POST /api/health/records (ฟิลด์ที่ไม่มีค่าจะไม่ส่ง) */
+  upload: async (samples: HealthSample[]) => {
+    const payload = samples
+      .filter((s) => s.heartRate !== undefined || s.spo2 !== undefined || s.steps !== undefined || s.temperature !== undefined)
+      .map((s) => ({
+        heartRate: int(s.heartRate),
+        spo2: int(s.spo2),
+        steps: int(s.steps),
+        temperature: s.temperature === undefined ? undefined : Math.round(s.temperature * 10) / 10,
+        recordedAt: new Date(s.timestamp).toISOString(),
+      }));
+    if (payload.length === 0) return;
+    await api.post('/health/records', { samples: payload });
+  },
 };
 
 export const WEEK_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];

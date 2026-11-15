@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import { BottomNav } from '@/components/BottomNav';
 import { useAuth } from '@/services/auth/AuthContext';
+import { useHealthSync } from '@/hooks/useHealthSync';
 
 /**
  * แถบเมนูล่างเป็นแบบกำหนดเอง (BottomNav) ตาม Figma: โปรไฟล์ · MediRemind · หน้าหลัก · Health · ตั้งค่า
@@ -8,6 +9,8 @@ import { useAuth } from '@/services/auth/AuthContext';
  */
 export default function TabsLayout() {
   const { user, loading } = useAuth();
+  // ส่งข้อมูลสุขภาพจากนาฬิกาเข้า backend ทุกหน้า (ต้องเรียกก่อน early return ตามกฎของ hooks)
+  useHealthSync(!!user);
   // ยังไม่ล็อกอิน → กลับไปหน้า Sign In (กันเข้าตรง ๆ ผ่าน URL บนเว็บ และหลัง logout)
   if (!loading && !user) return <Redirect href="/(auth)/sign-in" />;
 

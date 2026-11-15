@@ -17,24 +17,29 @@ export default function Health() {
   const router = useRouter();
   const [data, setData] = useState<Data>({ steps: null, spo2: null, heartRate: null });
 
+  // โหลดตอนเข้าหน้า แล้วรีเฟรชทุก 30 วินาทีขณะเปิดอยู่ (ข้อมูลใหม่จากนาฬิกาเข้า DB ผ่าน useHealthSync)
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      healthApi
-        .records()
-        .then((records) => {
-          if (!active) return;
-          setData({
-            steps: weeklySteps(records),
-            spo2: latestSeries(records, 'spo2'),
-            heartRate: latestSeries(records, 'heart_rate'),
+      const load = () =>
+        healthApi
+          .records()
+          .then((records) => {
+            if (!active) return;
+            setData({
+              steps: weeklySteps(records),
+              spo2: latestSeries(records, 'spo2'),
+              heartRate: latestSeries(records, 'heart_rate'),
+            });
+          })
+          .catch(() => {
+            // โหลดไม่ได้ → คงข้อมูลเดิม/กราฟตัวอย่างไว้
           });
-        })
-        .catch(() => {
-          // โหลดไม่ได้ → คงกราฟตัวอย่างไว้
-        });
+      void load();
+      const timer = setInterval(load, 30_000);
       return () => {
         active = false;
+        clearInterval(timer);
       };
     }, []),
   );
