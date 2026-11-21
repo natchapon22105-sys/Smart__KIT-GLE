@@ -36,7 +36,7 @@ kit-gle/
 │  ├─ app/                   routes (expo-router)
 │  │  ├─ index.tsx           Splash → /(tabs)/home
 │  │  ├─ (auth)/             sign-in, sign-up, privacy  ← ตาม Figma (Sign In / Register / Privacy Policy : PDPA)
-│  │  └─ (tabs)/             home (ทำตาม Figma แล้ว), profile/health/device/family ← placeholder; medi-remind/ = โฟลเดอร์ 3 หน้า (ทำแล้ว) รอ Figma (ต้องล็อกอินก่อน; family ซ่อนจากแถบเมนู)
+│  │  └─ (tabs)/             home (ทำตาม Figma แล้ว), profile/health/device ← placeholder; medi-remind/ = โฟลเดอร์ 3 หน้า (ทำแล้ว) รอ Figma (ต้องล็อกอินก่อน; family ซ่อนจากแถบเมนู)
 │  ├─ src/components/        SplashIntro, AnimatedBackground, Logo, PendingScreen, BottomNav, home/ (GlassPanel, ProfileHeader, WatchCard, FeatureGrid), auth/ (AuthShell, TextField, GradientButton, SocialRow)
 │  ├─ src/services/auth/     AuthContext (login/register/logout + token) · src/services/storage.ts (SecureStore/localStorage)
 │  ├─ src/content/           privacyPolicy.ts (ข้อความ PDPA — ฉบับร่าง) · src/utils/notify.ts
@@ -62,6 +62,10 @@ kit-gle/
   - ใช้แพ็กเกจใหม่ `expo-image-picker` (ต้อง `npx expo install expo-image-picker` / `npx expo install --fix`) — เพิ่ม plugin ใน app.json แล้ว (iOS ต้อง rebuild dev build ถ้าไม่ใช้ Expo Go)
   - ส่วนที่ "ไม่มีใน Figma" และเพิ่มเอง (ติด TODO(figma)): ปุ่มลบ (ลิงก์ "ลบรายการยานี้" หน้าแก้ไข), ข้อความสถานะว่าง, ตัวเลือกเวลาแบบ modal, ตัวเลือกวันแบบ chip ขยายใต้ช่อง Select Days
   - หลังบันทึก/ลบ จะ sync ตารางเตือนไปนาฬิกาผ่าน `syncMedicationAlarms` เฉพาะตอนเชื่อมต่ออยู่ (ยังไม่ส่ง "วัน" เพราะ protocol ยังไม่กำหนด)
+- **Family Link ตาม Figma 3 สถานะ** (`app/(tabs)/family.tsx` + `src/components/family/*` + `src/services/family.ts`): ปุ่ม Add family member (ค้นหาด้วย username/อีเมล), กลุ่ม WAITING FOR REPLY (Cancel), กลุ่ม CONNECT FAMILY (UN-LINK), สถานะว่าง
+  - ความหมาย: ผู้ส่งคำขอ = owner (แชร์ข้อมูลตัวเอง) ผู้รับ = member (ดูข้อมูล); API ใน `backend/src/routes/family.ts`: `GET /links`, `POST /invite {query}`, `POST /:id/respond`, `DELETE /:id` (Cancel/UN-LINK/ปฏิเสธ = ลบแถว), `GET /watching`; ไม่ต้องมี migration ใหม่
+  - ส่วนที่ไม่มีใน Figma (ติด TODO(figma)): หน้าต่างพิมพ์ username/email, กลุ่ม REQUESTS สำหรับผู้รับตอบรับ/ปฏิเสธ, กล่องยืนยัน UN-LINK
+  - ยังไม่มี: หน้าให้ญาติ "เปิดดู" ข้อมูลสุขภาพ/ยาของคนที่เชื่อมต่อ (API `/family/owners/:id/health` มีแล้ว) — รอดีไซน์
 - **Health status ตาม Figma** (`app/(tabs)/health.tsx` + `src/components/health/charts.tsx` + `src/services/health.ts`): กราฟแท่งก้าวเดิน 7 วัน, เส้น SpO2, แท่งเวลานอน, เส้นอัตราการเต้นหัวใจ (วาดด้วย View ล้วน ไม่พึ่ง react-native-svg; เส้นเป็นสีทึบ ไม่ไล่เฉดแบบ Figma)
   - Backend `GET /api/health/summary` (7 วัน + เฉลี่ยรายชั่วโมง 24 ชม.), เพิ่มคอลัมน์ `health_records.sleep_minutes` → **DB เดิมต้องรัน `database/migrations/003_health_sleep.sql`**
   - `useWatch` ส่งค่าสุขภาพจากนาฬิกา/โหมดจำลองไปเก็บ (`uploadHealthSample` ทุก ≥60 วินาที) กราฟจึงจะมีข้อมูล; **เวลานอนยังไม่มีแหล่งข้อมูล** (รอ BLE protocol) กราฟนอนจะว่างไว้ก่อน; จัดกลุ่มวันตามเขตเวลาเซิร์ฟเวอร์

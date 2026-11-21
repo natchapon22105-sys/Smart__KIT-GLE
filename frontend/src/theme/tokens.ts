@@ -84,6 +84,17 @@ export const healthColors = {
   heart: { tag: '#8E1212', line: '#7A0D0D' },
 } as const;
 
+/** สีหน้า Family Link (ค่าประมาณจากเฟรม Figma — TODO(figma): ซิงก์ค่าจริง) */
+export const familyColors = {
+  add: '#52BD0A',
+  row: 'rgba(255,255,255,0.14)',
+  rowBorder: 'rgba(255,255,255,0.22)',
+  emptyIcon: 'rgba(20,35,28,0.55)',
+  emptyText: 'rgba(20,35,28,0.6)',
+  connect: '#1BF21B',
+  waiting: '#D9D9D9',
+} as const;
+
 export const fonts = {
   // TODO(figma): เปลี่ยนเป็นฟอนต์จริง (โหลดผ่าน expo-font)
   title: undefined as string | undefined,
