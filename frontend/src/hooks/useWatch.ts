@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { uploadHealthSample } from '@/services/health';
 import { getBleService, type ConnectionState, type HealthSample, type WatchDevice } from '@/services/ble';
 
 /**
@@ -13,7 +14,10 @@ export function useWatch() {
 
   useEffect(() => {
     const offState = ble.onStateChange(setState);
-    const offHealth = ble.subscribeHealth(setHealth);
+    const offHealth = ble.subscribeHealth((sample) => {
+      setHealth(sample);
+      uploadHealthSample(sample); // เก็บลงฐานข้อมูล (หน่วงเวลา) เพื่อใช้แสดงกราฟหน้า Health status
+    });
     return () => {
       offState();
       offHealth();

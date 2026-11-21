@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS health_records (
   spo2        TINYINT UNSIGNED NULL,
   steps       INT UNSIGNED NULL,
   temperature DECIMAL(4,1) NULL,
+  sleep_minutes SMALLINT UNSIGNED NULL, -- นาทีที่หลับในช่วงบันทึกนั้น (รอ BLE protocol จริง)
   recorded_at DATETIME NOT NULL,
   CONSTRAINT fk_hr_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_hr_user_time (user_id, recorded_at)

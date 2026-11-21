@@ -72,6 +72,18 @@ export const mediColors = {
   upload: 'rgba(190,196,194,0.75)',
 } as const;
 
+/** สีหน้า Health status (ค่าประมาณจากเฟรม Figma — TODO(figma): ซิงก์ค่าจริง) */
+export const healthColors = {
+  panel: 'rgba(255,255,255,0.12)',
+  panelBorder: 'rgba(255,255,255,0.2)',
+  grid: 'rgba(255,255,255,0.5)',
+  axisText: 'rgba(255,255,255,0.8)',
+  steps: { tag: '#E8651A', bar: '#B26A2F' },
+  spo2: { tag: '#1FA3E6', line: '#1AA6F0' },
+  sleep: { tag: '#9B3F85', bar: '#6A0F80' },
+  heart: { tag: '#8E1212', line: '#7A0D0D' },
+} as const;
+
 export const fonts = {
   // TODO(figma): เปลี่ยนเป็นฟอนต์จริง (โหลดผ่าน expo-font)
   title: undefined as string | undefined,

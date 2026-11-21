@@ -62,6 +62,9 @@ kit-gle/
   - ใช้แพ็กเกจใหม่ `expo-image-picker` (ต้อง `npx expo install expo-image-picker` / `npx expo install --fix`) — เพิ่ม plugin ใน app.json แล้ว (iOS ต้อง rebuild dev build ถ้าไม่ใช้ Expo Go)
   - ส่วนที่ "ไม่มีใน Figma" และเพิ่มเอง (ติด TODO(figma)): ปุ่มลบ (ลิงก์ "ลบรายการยานี้" หน้าแก้ไข), ข้อความสถานะว่าง, ตัวเลือกเวลาแบบ modal, ตัวเลือกวันแบบ chip ขยายใต้ช่อง Select Days
   - หลังบันทึก/ลบ จะ sync ตารางเตือนไปนาฬิกาผ่าน `syncMedicationAlarms` เฉพาะตอนเชื่อมต่ออยู่ (ยังไม่ส่ง "วัน" เพราะ protocol ยังไม่กำหนด)
+- **Health status ตาม Figma** (`app/(tabs)/health.tsx` + `src/components/health/charts.tsx` + `src/services/health.ts`): กราฟแท่งก้าวเดิน 7 วัน, เส้น SpO2, แท่งเวลานอน, เส้นอัตราการเต้นหัวใจ (วาดด้วย View ล้วน ไม่พึ่ง react-native-svg; เส้นเป็นสีทึบ ไม่ไล่เฉดแบบ Figma)
+  - Backend `GET /api/health/summary` (7 วัน + เฉลี่ยรายชั่วโมง 24 ชม.), เพิ่มคอลัมน์ `health_records.sleep_minutes` → **DB เดิมต้องรัน `database/migrations/003_health_sleep.sql`**
+  - `useWatch` ส่งค่าสุขภาพจากนาฬิกา/โหมดจำลองไปเก็บ (`uploadHealthSample` ทุก ≥60 วินาที) กราฟจึงจะมีข้อมูล; **เวลานอนยังไม่มีแหล่งข้อมูล** (รอ BLE protocol) กราฟนอนจะว่างไว้ก่อน; จัดกลุ่มวันตามเขตเวลาเซิร์ฟเวอร์
   - Home แสดงคิวยา MediRemind ถัดไปในการ์ดดีไซน์เดิม (วัน/เวลาในเครื่อง); แตะแถบสีเพื่อบันทึก/ยกเลิกสถานะกินยา (`GET /api/medications/logs`, `PUT /api/medications/:id/log`) และโหลดข้อมูลใหม่เมื่อกลับหน้า Home — Chat/Family ยังเป็นโครงตามดีไซน์ ไม่มีข้อมูลจริง
   - ส่วนที่ **ไม่มีใน Figma** แล้วผมเพิ่มพื้นฐาน: ข้อความ/ปุ่มสถานะกำลังค้นหา-เชื่อมต่อแล้ว-ผิดพลาด ของการ์ดนาฬิกา, หน้าโปรไฟล์ (placeholder + ปุ่มออกจากระบบชั่วคราว), ปุ่ม Chat for family แสดงแค่ "ยังไม่เปิดใช้งาน"
   - ไอคอนทั้งหมดเป็น Ionicons ชั่วคราว (TODO(figma): ใช้ไอคอนจริง), เบลอกระจกใช้ `backdrop-filter` บนเว็บเท่านั้น (บนมือถือเป็นสีโปร่งแสง — ถ้าต้องการเบลอจริงใช้ `expo-blur`), สีอยู่ใน `theme/tokens.ts › homeColors` (ค่าประมาณ)
