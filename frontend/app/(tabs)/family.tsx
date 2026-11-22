@@ -3,7 +3,6 @@ import { ActivityIndicator, Alert, Platform, Pressable, Text, View } from 'react
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MediScreen } from '@/components/medi/MediScreen';
 import { AddButton, EmptyFamily, GroupLabel, PersonRow } from '@/components/family/FamilyParts';
-import { AddFamilyModal } from '@/components/family/AddFamilyModal';
 import { family, type FamilyLinks, type FamilyPerson } from '@/services/family';
 import { familyColors } from '@/theme/tokens';
 import { notify } from '@/utils/notify';
@@ -13,7 +12,6 @@ export default function Family() {
   const router = useRouter();
   const [data, setData] = useState<FamilyLinks | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -58,7 +56,7 @@ export default function Family() {
 
   return (
     <MediScreen title="Family Link" onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/home'))}>
-      <AddButton onPress={() => setAdding(true)} />
+      <AddButton onPress={() => router.push('/(tabs)/family-search')} />
 
       {data === null && <ActivityIndicator color="#fff" style={{ marginTop: 40 }} />}
       {error && (
@@ -111,14 +109,6 @@ export default function Family() {
         </>
       )}
 
-      <AddFamilyModal
-        visible={adding}
-        onClose={() => setAdding(false)}
-        onSend={async (q) => {
-          await family.invite(q);
-          await load();
-        }}
-      />
     </MediScreen>
   );
 }

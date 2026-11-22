@@ -25,7 +25,7 @@ export function BottomNav({ state, navigateToTab }: Props) {
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
   // หน้า Family Link ไม่มีปุ่มบนแถบ — ใน Figma ขีดเส้นใต้ไอคอนโปรไฟล์ไว้
-  const activeName = current === 'family' ? 'profile' : current;
+  const activeName = current === 'family' || current === 'family-search' ? 'profile' : current;
 
   return (
     <View pointerEvents="box-none" style={[styles.outer, { paddingBottom: Math.max(insets.bottom, 12) }]}>

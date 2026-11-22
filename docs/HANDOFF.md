@@ -68,7 +68,8 @@ kit-gle/
   - ไม่มีใน Figma (ติด TODO(figma)): ปุ่มกล้อง/ลบรูป, เนื้อหาในแถบขยายทั้ง 3, การตั้งค่านาฬิกา (BLE `applySettings`) ยังไม่ได้ทำ
 - **Family Link ตาม Figma 3 สถานะ** (`app/(tabs)/family.tsx` + `src/components/family/*` + `src/services/family.ts`): ปุ่ม Add family member (ค้นหาด้วย username/อีเมล), กลุ่ม WAITING FOR REPLY (Cancel), กลุ่ม CONNECT FAMILY (UN-LINK), สถานะว่าง
   - ความหมาย: ผู้ส่งคำขอ = owner (แชร์ข้อมูลตัวเอง) ผู้รับ = member (ดูข้อมูล); API ใน `backend/src/routes/family.ts`: `GET /links`, `POST /invite {query}`, `POST /:id/respond`, `DELETE /:id` (Cancel/UN-LINK/ปฏิเสธ = ลบแถว), `GET /watching`; ไม่ต้องมี migration ใหม่
-  - ส่วนที่ไม่มีใน Figma (ติด TODO(figma)): หน้าต่างพิมพ์ username/email, กลุ่ม REQUESTS สำหรับผู้รับตอบรับ/ปฏิเสธ, กล่องยืนยัน UN-LINK
+  - ปุ่ม Add family member เปิดหน้าค้นหา `app/(tabs)/family-search.tsx` (Figma "search Username or Email"): พิมพ์ ≥2 ตัวอักษร ค้นแบบ username ขึ้นต้นด้วย/อีเมลเต็ม (`GET /api/family/search`) แล้วกด sent link; ปุ่มเปลี่ยนเป็น sent/pending/linked ตามสถานะ
+  - ส่วนที่ไม่มีใน Figma (ติด TODO(figma)): ข้อความสถานะว่างของหน้าค้นหา, กลุ่ม REQUESTS สำหรับผู้รับตอบรับ/ปฏิเสธ, กล่องยืนยัน UN-LINK
   - ยังไม่มี: หน้าให้ญาติ "เปิดดู" ข้อมูลสุขภาพ/ยาของคนที่เชื่อมต่อ (API `/family/owners/:id/health` มีแล้ว) — รอดีไซน์
 - **Health status ตาม Figma** (`app/(tabs)/health.tsx` + `src/components/health/charts.tsx` + `src/services/health.ts`): กราฟแท่งก้าวเดิน 7 วัน, เส้น SpO2, แท่งเวลานอน, เส้นอัตราการเต้นหัวใจ (วาดด้วย View ล้วน ไม่พึ่ง react-native-svg; เส้นเป็นสีทึบ ไม่ไล่เฉดแบบ Figma)
   - Backend `GET /api/health/summary` (7 วัน + เฉลี่ยรายชั่วโมง 24 ชม.), เพิ่มคอลัมน์ `health_records.sleep_minutes` → **DB เดิมต้องรัน `database/migrations/003_health_sleep.sql`**
