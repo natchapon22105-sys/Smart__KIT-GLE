@@ -8,6 +8,6 @@ import { Image, ImageStyle, StyleProp } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('../../assets/images/logo.png');
 
-export function Logo({ size = 200, style }: { size?: number; style?: StyleProp<ImageStyle> }) {
+export function Logo({ size = 400, style }: { size?: number; style?: StyleProp<ImageStyle> }) {
   return <Image source={LOGO} style={[{ width: size, height: size }, style]} resizeMode="contain" />;
 }

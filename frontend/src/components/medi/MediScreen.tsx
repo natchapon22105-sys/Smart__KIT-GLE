@@ -22,7 +22,11 @@ export function MediScreen({
       <LinearGradient colors={homeColors.bg} style={StyleSheet.absoluteFill} />
       <AnimatedBackground color={homeColors.cell} />
       <ScrollView
-        contentContainerStyle={{ paddingTop: Math.max(insets.top + 24, 82), // Figma: แคปซูลหัวข้ออยู่ที่ ~83px จากบนสุด paddingBottom: insets.bottom + 130 }}
+        contentContainerStyle={{
+          // Figma: แคปซูลหัวข้ออยู่ที่ ~83px จากบนสุด
+          paddingTop: Math.max(insets.top + 24, 82),
+          paddingBottom: insets.bottom + 130,
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

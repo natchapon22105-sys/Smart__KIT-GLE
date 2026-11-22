@@ -57,7 +57,7 @@ export default function Family() {
   const incoming = data?.incoming ?? [];
 
   return (
-    <MediScreen title="Family Link" onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/home'))}>
+    <MediScreen title="Family Link" onBack={() => router.replace('/(tabs)/home')}>
       <AddButton onPress={() => setAdding(true)} />
 
       {data === null && <ActivityIndicator color="#fff" style={{ marginTop: 40 }} />}
