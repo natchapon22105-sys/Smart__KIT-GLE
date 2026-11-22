@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   gender        ENUM('male','female','other') NULL,
   height_cm     SMALLINT UNSIGNED NULL,
   weight_kg     DECIMAL(5,1) NULL,
+  avatar_data   MEDIUMTEXT NULL,                   -- รูปโปรไฟล์ (data URI ขนาดเล็ก) TODO: ย้ายไป object storage ตอน production
   privacy_accepted_at DATETIME NOT NULL,           -- วันเวลาที่ผู้ใช้ยอมรับ Privacy Policy (PDPA)
   privacy_version     VARCHAR(20) NOT NULL,        -- เวอร์ชันข้อความที่ยอมรับ
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

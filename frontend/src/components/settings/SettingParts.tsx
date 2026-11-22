@@ -1,19 +1,50 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { settingColors } from '@/theme/tokens';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 /** รูปโปรไฟล์: วงแหวนขาวขอบดำ + พื้นเทาเข้ม + รูปคนสีเทาอ่อน (ตามดีไซน์) */
-export function Avatar({ size = 134 }: { size?: number }) {
+export function Avatar({
+  size = 134,
+  uri,
+  busy,
+  onPress,
+}: {
+  size?: number;
+  uri?: string | null;
+  busy?: boolean;
+  /** ถ้าใส่ จะกดเพื่อเปลี่ยนรูปได้ (มีปุ่มกล้องที่มุม) */
+  onPress?: () => void;
+}) {
   const inner = size * 0.76;
-  return (
+  const ring = (
     <View style={[s.ring, { width: size, height: size, borderRadius: size / 2 }]}>
       <View style={[s.inner, { width: inner, height: inner, borderRadius: inner / 2 }]}>
-        <Ionicons name="person" size={inner * 0.95} color={settingColors.avatarFigure} style={{ marginTop: inner * 0.18 }} />
+        {uri ? (
+          <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        ) : (
+          <Ionicons name="person" size={inner * 0.95} color={settingColors.avatarFigure} style={{ marginTop: inner * 0.18 }} />
+        )}
+        {busy && (
+          <View style={s.busy}>
+            <ActivityIndicator color="#fff" />
+          </View>
+        )}
       </View>
+      {onPress && (
+        <View style={s.cam}>
+          <Ionicons name="camera" size={size * 0.14} color="#fff" />
+        </View>
+      )}
     </View>
+  );
+  if (!onPress) return ring;
+  return (
+    <Pressable onPress={onPress} disabled={busy} accessibilityRole="button" accessibilityLabel="เปลี่ยนรูปโปรไฟล์" style={{ alignSelf: 'center' }}>
+      {ring}
+    </Pressable>
   );
 }
 
@@ -56,6 +87,20 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
+  },
+  busy: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+  cam: {
+    position: 'absolute',
+    right: 2,
+    bottom: 6,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#1F7BEA',
+    borderWidth: 2,
+    borderColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inner: { backgroundColor: settingColors.avatarInner, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   row: {

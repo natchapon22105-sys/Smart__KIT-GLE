@@ -29,7 +29,7 @@ const profileBody = z.object({
 
 const SELECT = `SELECT email, username, display_name AS displayName,
        DATE_FORMAT(birth_date, '%Y-%m-%d') AS birthDate, gender,
-       height_cm AS heightCm, weight_kg AS weightKg
+       height_cm AS heightCm, weight_kg AS weightKg, avatar_data AS avatar
   FROM users WHERE id = ?`;
 
 const shape = (r: RowDataPacket) => ({ ...r, weightKg: r.weightKg == null ? null : Number(r.weightKg) });
@@ -50,6 +50,16 @@ profileRouter.put('/', async (req: AuthedRequest, res) => {
   );
   const [rows] = await usersDb.query<RowDataPacket[]>(SELECT, [req.userId]);
   res.json({ profile: shape(rows[0]!) });
+});
+
+// รูปโปรไฟล์: ส่ง data URI ที่ย่อแล้วจากแอป หรือ null เพื่อลบรูป
+profileRouter.put('/avatar', async (req: AuthedRequest, res) => {
+  const p = z
+    .object({ image: z.string().startsWith('data:image/').max(1_500_000).nullable() })
+    .safeParse(req.body);
+  if (!p.success) return res.status(400).json({ error: 'รูปไม่ถูกต้องหรือมีขนาดใหญ่เกินไป' });
+  await usersDb.query('UPDATE users SET avatar_data = ? WHERE id = ?', [p.data.image, req.userId]);
+  res.json({ avatar: p.data.image });
 });
 
 reportsRouter.post('/', rateLimit({ windowMs: 60 * 60_000, max: 10 }), async (req: AuthedRequest, res) => {

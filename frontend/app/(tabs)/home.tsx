@@ -18,6 +18,7 @@ import {
   type MedicationDoseLog,
 } from '@/services/medications';
 import { family } from '@/services/family';
+import { profileApi } from '@/services/profile';
 import { notify } from '@/utils/notify';
 import { homeColors } from '@/theme/tokens';
 
@@ -36,6 +37,7 @@ export default function Home() {
   const [medicationError, setMedicationError] = useState(false);
   const [doseStatusSaving, setDoseStatusSaving] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [familyInfo, setFamilyInfo] = useState<{ incoming: number; connected: number } | null>(null);
 
   const logoSize = Math.min(width, 520) * 0.92;
@@ -63,6 +65,20 @@ export default function Home() {
         .catch(() => {
           if (active) setMedicationError(true);
         });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  // รูปโปรไฟล์ (เปลี่ยนได้ที่หน้า Setting) — โหลดใหม่ทุกครั้งที่กลับมาหน้านี้
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      profileApi
+        .get()
+        .then((p) => active && setAvatarUri(p.avatar))
+        .catch(() => undefined);
       return () => {
         active = false;
       };
@@ -144,6 +160,7 @@ export default function Home() {
             active={watch.connected}
             version={VERSION_LABEL}
             onAddFamily={() => router.push('/(tabs)/family')}
+            avatarUri={avatarUri}
           />
 
           <View style={styles.gap} />

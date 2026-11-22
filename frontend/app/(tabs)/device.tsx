@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { MediScreen } from '@/components/medi/MediScreen';
 import { GlassPanel } from '@/components/home/GlassPanel';
 import { AccordionRow, Avatar } from '@/components/settings/SettingParts';
 import { AccountInfo } from '@/components/settings/AccountInfo';
 import { ReportApp } from '@/components/settings/ReportApp';
 import { useAuth } from '@/services/auth/AuthContext';
+import { profileApi } from '@/services/profile';
+import { pickSquareImage } from '@/utils/pickImage';
+import { notify } from '@/utils/notify';
 import { settingColors } from '@/theme/tokens';
 
 type Section = 'account' | 'report' | 'about' | null;
@@ -22,6 +25,35 @@ export default function Setting() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState<Section>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      profileApi
+        .get()
+        .then((p) => {
+          setAvatar(p.avatar);
+          setDisplayName(p.displayName);
+        })
+        .catch(() => undefined);
+    }, []),
+  );
+
+  const changeAvatar = async (image: string | null) => {
+    setAvatarBusy(true);
+    try {
+      setAvatar(await profileApi.setAvatar(image));
+    } catch (e) {
+      notify('อัปโหลดรูปไม่สำเร็จ', e instanceof Error ? e.message : 'เกิดข้อผิดพลาด');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+  const pickAvatar = async () => {
+    const img = await pickSquareImage();
+    if (img) await changeAvatar(img);
+  };
   const toggle = (k: Exclude<Section, null>) => setOpen((cur) => (cur === k ? null : k));
 
   const username = user?.username ?? 'UserName';
@@ -29,7 +61,12 @@ export default function Setting() {
   return (
     <MediScreen title="Setting" onBack={() => router.replace('/(tabs)/home')}>
       <GlassPanel radius={22} tint={settingColors.panel} border={settingColors.panelBorder} style={s.panel}>
-        <Avatar />
+        <Avatar uri={avatar} busy={avatarBusy} onPress={pickAvatar} />
+        {avatar && !avatarBusy && (
+          <Pressable onPress={() => changeAvatar(null)} accessibilityRole="button" style={s.removePhoto}>
+            <Text style={s.removeText}>ลบรูปโปรไฟล์</Text>
+          </Pressable>
+        )}
         <Text style={s.name} numberOfLines={1} adjustsFontSizeToFit>
           {displayName ?? username}
         </Text>
@@ -62,6 +99,8 @@ const s = StyleSheet.create({
   panel: { marginHorizontal: 22, paddingHorizontal: 10, paddingTop: 22, paddingBottom: 30, minHeight: 560 },
   name: { marginTop: 8, textAlign: 'center', fontSize: 36, fontWeight: '900', color: settingColors.name },
   handle: { textAlign: 'center', fontSize: 11, color: settingColors.handle },
+  removePhoto: { alignSelf: 'center', marginTop: 6, padding: 4 },
+  removeText: { color: 'rgba(255,255,255,0.65)', fontSize: 11 },
   about: { color: 'rgba(255,255,255,0.85)', fontSize: 13, textAlign: 'center' },
   logout: { alignSelf: 'center', marginTop: 16, width: 140, height: 40, borderRadius: 20, backgroundColor: settingColors.logout, alignItems: 'center', justifyContent: 'center' },
   logoutText: { color: '#fff', fontWeight: '900', fontSize: 14 },

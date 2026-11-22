@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassPanel } from './GlassPanel';
 import { homeColors } from '@/theme/tokens';
@@ -15,11 +15,14 @@ export function ProfileHeader({
   active,
   version,
   onAddFamily,
+  avatarUri,
 }: {
   username: string;
   active: boolean;
   version: string;
   onAddFamily: () => void;
+  /** รูปโปรไฟล์ (data URI) — ไม่มีก็แสดงรูปคนเทา */
+  avatarUri?: string | null;
 }) {
   return (
     <View style={styles.wrap}>
@@ -30,7 +33,11 @@ export function ProfileHeader({
       <View style={styles.row}>
         <View style={styles.avatarRing}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={78} color="#C2C2C2" style={{ marginBottom: -10 }} />
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            ) : (
+              <Ionicons name="person" size={78} color="#C2C2C2" style={{ marginBottom: -10 }} />
+            )}
           </View>
         </View>
 
