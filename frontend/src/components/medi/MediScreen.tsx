@@ -22,7 +22,7 @@ export function MediScreen({
       <LinearGradient colors={homeColors.bg} style={StyleSheet.absoluteFill} />
       <AnimatedBackground color={homeColors.cell} />
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 130 }}
+        contentContainerStyle={{ paddingTop: Math.max(insets.top + 24, 82), // Figma: แคปซูลหัวข้ออยู่ที่ ~83px จากบนสุด paddingBottom: insets.bottom + 130 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -50,14 +50,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    height: 60,
+    height: 58,
     paddingLeft: 10,
     paddingRight: 24,
     gap: 4,
     borderTopRightRadius: 30,
     borderBottomRightRadius: 30,
     backgroundColor: mediColors.pill,
-    marginBottom: 14,
+    marginBottom: 17,
   },
   pillText: { fontSize: 24, fontWeight: '800', color: 'rgba(255,255,255,0.9)' },
 });

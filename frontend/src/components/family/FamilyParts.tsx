@@ -9,7 +9,7 @@ import type { FamilyPerson } from '@/services/family';
 export function AddButton({ onPress }: { onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={s.add}>
-      <Ionicons name="person-add" size={22} color="#1F1F1F" style={{ marginRight: 14 }} />
+      <Ionicons name="person-add" size={30} color="#252525" style={s.addIcon} />
       <Text style={s.addText}>Add family member</Text>
     </Pressable>
   );
@@ -19,7 +19,7 @@ export function AddButton({ onPress }: { onPress: () => void }) {
 export function EmptyFamily() {
   return (
     <View style={s.empty}>
-      <Ionicons name="people-outline" size={56} color={familyColors.emptyIcon} />
+      <Ionicons name="people-outline" size={50} color={familyColors.emptyIcon} />
       <Text style={s.emptyText}>No family linked yet. Search by username or email to{'\n'}send a link request.</Text>
     </View>
   );
@@ -40,7 +40,7 @@ export type RowAction = { text: string; kind: 'cancel' | 'unlink' | 'accept' | '
 /** แถวบุคคล: อวาตาร์ + ชื่อ + @username + ปุ่มด้านขวา (1–2 ปุ่ม) */
 export function PersonRow({ person, actions }: { person: FamilyPerson; actions: RowAction[] }) {
   return (
-    <GlassPanel radius={26} tint={familyColors.row} border={familyColors.rowBorder} style={s.row}>
+    <GlassPanel radius={32} tint={familyColors.row} border={familyColors.rowBorder} style={s.row}>
       <View style={s.avatar} />
       <View style={{ flex: 1 }}>
         <Text style={s.name} numberOfLines={1}>{person.displayName || person.username}</Text>
@@ -58,32 +58,33 @@ export function PersonRow({ person, actions }: { person: FamilyPerson; actions: 
 }
 
 const btnStyle = StyleSheet.create({
-  cancel: { backgroundColor: 'rgba(170,176,174,0.7)' },
-  unlink: { backgroundColor: '#FF0000' },
+  cancel: { backgroundColor: 'rgba(150,160,156,0.75)' },
+  unlink: { backgroundColor: '#FF0000', minWidth: 96, height: 27 },
   accept: { backgroundColor: '#1BF21B' },
   decline: { backgroundColor: 'rgba(170,176,174,0.7)' },
 });
 
 const s = StyleSheet.create({
   add: {
-    height: 45,
-    marginHorizontal: 22,
-    borderRadius: 23,
+    height: 44,
+    marginHorizontal: 18,
+    borderRadius: 22,
     backgroundColor: familyColors.add,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  addText: { color: '#111', fontWeight: '800', fontSize: 14 },
-  empty: { alignItems: 'center', marginTop: 22, paddingHorizontal: 30 },
+  // ไอคอนกับข้อความไม่ได้อยู่กึ่งกลางรวมกัน — ตามตำแหน่งใน Figma (ไอคอนซ้าย ข้อความเริ่มที่ ~121px)
+  addIcon: { marginLeft: 62 },
+  addText: { color: '#111', fontWeight: '800', fontSize: 13, marginLeft: 22 },
+  empty: { alignItems: 'center', marginTop: 24, paddingHorizontal: 30 },
   emptyText: { marginTop: 8, color: familyColors.emptyText, textAlign: 'center', fontSize: 11, lineHeight: 15 },
-  label: { flexDirection: 'row', alignItems: 'center', marginTop: 26, marginBottom: 8 },
-  labelBar: { width: 58, height: 9, borderTopRightRadius: 5, borderBottomRightRadius: 5, marginRight: 8 },
-  labelText: { color: '#fff', fontWeight: '800', fontSize: 10, letterSpacing: 0.3 },
-  row: { marginHorizontal: 32, flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, gap: 12 },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#D9D9D9' },
-  name: { color: '#fff', fontSize: 19, fontWeight: '600' },
-  handle: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
-  btn: { minWidth: 82, height: 26, paddingHorizontal: 12, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  btnText: { color: '#000', fontWeight: '800', fontSize: 12 },
+  label: { flexDirection: 'row', alignItems: 'center', marginTop: 28, marginBottom: 10, marginLeft: 4 },
+  labelBar: { width: 55, height: 9, borderRadius: 5, marginRight: 7 },
+  labelText: { color: '#fff', fontWeight: '800', fontSize: 10 },
+  row: { marginHorizontal: 33, minHeight: 67, flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 17, gap: 10 },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#D9D9D9' },
+  name: { color: '#fff', fontSize: 19, fontWeight: '600', lineHeight: 22 },
+  handle: { color: 'rgba(255,255,255,0.45)', fontSize: 11, lineHeight: 13 },
+  btn: { minWidth: 80, height: 26, paddingHorizontal: 12, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  btnText: { color: '#000', fontWeight: '800', fontSize: 13 },
 });

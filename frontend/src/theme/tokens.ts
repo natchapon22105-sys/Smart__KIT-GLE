@@ -86,11 +86,11 @@ export const healthColors = {
 
 /** สีหน้า Family Link (ค่าประมาณจากเฟรม Figma — TODO(figma): ซิงก์ค่าจริง) */
 export const familyColors = {
-  add: '#52BD0A',
+  add: '#4FBB07',
   row: 'rgba(255,255,255,0.14)',
-  rowBorder: 'rgba(255,255,255,0.22)',
-  emptyIcon: 'rgba(20,35,28,0.55)',
-  emptyText: 'rgba(20,35,28,0.6)',
+  rowBorder: 'rgba(255,255,255,0.3)',
+  emptyIcon: 'rgba(20,35,28,0.5)',
+  emptyText: 'rgba(150,185,165,0.3)',
   connect: '#1BF21B',
   waiting: '#D9D9D9',
 } as const;
