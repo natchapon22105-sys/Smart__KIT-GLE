@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   display_name  VARCHAR(120) NOT NULL,
   birth_date    DATE NULL,
+  gender        ENUM('male','female','other') NULL,
+  height_cm     SMALLINT UNSIGNED NULL,
+  weight_kg     DECIMAL(5,1) NULL,
   privacy_accepted_at DATETIME NOT NULL,           -- วันเวลาที่ผู้ใช้ยอมรับ Privacy Policy (PDPA)
   privacy_version     VARCHAR(20) NOT NULL,        -- เวอร์ชันข้อความที่ยอมรับ
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -28,6 +31,15 @@ CREATE TABLE IF NOT EXISTS user_devices (
   created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_ud_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_ud_user (user_id)
+) ENGINE=InnoDB;
+
+-- รายงานปัญหาจากหน้า Setting → Report app
+CREATE TABLE IF NOT EXISTS app_reports (
+  id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id    BIGINT UNSIGNED NOT NULL,
+  message    TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_report_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ระบบที่ 1: MediRemind

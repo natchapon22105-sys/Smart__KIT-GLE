@@ -4,6 +4,7 @@ import { devicesRouter } from './devices.js';
 import { healthRouter } from './health.js';
 import { familyRouter } from './family.js';
 import { medicationsRouter } from './medications.js';
+import { profileRouter, reportsRouter } from './profile.js';
 
 export const api = Router();
 api.get('/ping', (_req, res) => res.json({ ok: true, service: 'kit-gle-backend' }));
@@ -12,4 +13,6 @@ api.use('/devices', devicesRouter);
 api.use('/health', healthRouter);
 api.use('/family', familyRouter);
 api.use('/medications', medicationsRouter);
+api.use('/profile', profileRouter); // หน้า Setting → Account info
+api.use('/reports', reportsRouter); // หน้า Setting → Report app
 // TODO: ingest medication_logs from the watch after the BLE protocol is defined.

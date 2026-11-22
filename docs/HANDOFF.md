@@ -62,6 +62,9 @@ kit-gle/
   - ใช้แพ็กเกจใหม่ `expo-image-picker` (ต้อง `npx expo install expo-image-picker` / `npx expo install --fix`) — เพิ่ม plugin ใน app.json แล้ว (iOS ต้อง rebuild dev build ถ้าไม่ใช้ Expo Go)
   - ส่วนที่ "ไม่มีใน Figma" และเพิ่มเอง (ติด TODO(figma)): ปุ่มลบ (ลิงก์ "ลบรายการยานี้" หน้าแก้ไข), ข้อความสถานะว่าง, ตัวเลือกเวลาแบบ modal, ตัวเลือกวันแบบ chip ขยายใต้ช่อง Select Days
   - หลังบันทึก/ลบ จะ sync ตารางเตือนไปนาฬิกาผ่าน `syncMedicationAlarms` เฉพาะตอนเชื่อมต่ออยู่ (ยังไม่ส่ง "วัน" เพราะ protocol ยังไม่กำหนด)
+- **Setting ตาม Figma** (`app/(tabs)/device.tsx` = ปุ่มขวาสุดของแถบเมนู + `src/components/settings/*` + `src/services/profile.ts`): รูปโปรไฟล์, ชื่อ/@username, แถบขยาย Account info (ชื่อที่แสดง, วันเกิด→อายุ, เพศ, ส่วนสูง, น้ำหนัก — ใช้กับระบบสุขภาพ), Report app (เก็บลง `app_reports`), About app, LOG OUT
+  - Backend: `GET/PUT /api/profile`, `POST /api/reports` (`backend/src/routes/profile.ts`); คอลัมน์ใหม่ `users.gender/height_cm/weight_kg` + ตาราง `app_reports` → **DB เดิมต้องรัน `database/migrations/004_profile_and_reports.sql`**
+  - ไม่มีใน Figma (ติด TODO(figma)): เนื้อหาในแถบขยายทั้ง 3, การตั้งค่านาฬิกา (BLE `applySettings`) ยังไม่ได้ทำ; รูปโปรไฟล์ยังเป็นรูปคนเทา (ยังไม่มีอัปโหลด)
 - **Family Link ตาม Figma 3 สถานะ** (`app/(tabs)/family.tsx` + `src/components/family/*` + `src/services/family.ts`): ปุ่ม Add family member (ค้นหาด้วย username/อีเมล), กลุ่ม WAITING FOR REPLY (Cancel), กลุ่ม CONNECT FAMILY (UN-LINK), สถานะว่าง
   - ความหมาย: ผู้ส่งคำขอ = owner (แชร์ข้อมูลตัวเอง) ผู้รับ = member (ดูข้อมูล); API ใน `backend/src/routes/family.ts`: `GET /links`, `POST /invite {query}`, `POST /:id/respond`, `DELETE /:id` (Cancel/UN-LINK/ปฏิเสธ = ลบแถว), `GET /watching`; ไม่ต้องมี migration ใหม่
   - ส่วนที่ไม่มีใน Figma (ติด TODO(figma)): หน้าต่างพิมพ์ username/email, กลุ่ม REQUESTS สำหรับผู้รับตอบรับ/ปฏิเสธ, กล่องยืนยัน UN-LINK

@@ -95,6 +95,20 @@ export const familyColors = {
   waiting: '#D9D9D9',
 } as const;
 
+/** สีหน้า Setting (ค่าประมาณจากเฟรม Figma — TODO(figma): ซิงก์ค่าจริง) */
+export const settingColors = {
+  panel: 'rgba(255,255,255,0.14)',
+  panelBorder: 'rgba(255,255,255,0.3)',
+  row: 'rgba(190,196,192,0.88)',
+  rowText: '#111111',
+  name: 'rgba(225,225,225,0.9)',
+  handle: 'rgba(225,225,225,0.55)',
+  avatarInner: '#5C5C5C',
+  avatarFigure: '#C4C4C4',
+  field: 'rgba(120,128,124,0.5)',
+  logout: '#FF0000',
+} as const;
+
 export const fonts = {
   // TODO(figma): เปลี่ยนเป็นฟอนต์จริง (โหลดผ่าน expo-font)
   title: undefined as string | undefined,
