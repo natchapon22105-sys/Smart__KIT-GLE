@@ -6,13 +6,14 @@
     "scheme": "kitgle",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/auth-hero.jpg",
     "backgroundColor": "#222222",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.kitgle.app",
       "infoPlist": {
-        "NSBluetoothAlwaysUsageDescription": "KIT - GLE ใช้ Bluetooth เพื่อเชื่อมต่อกับนาฬิกาของคุณ"
+        "NSBluetoothAlwaysUsageDescription": "KIT - GLE ใช้ Bluetooth เพื่อเชื่อมต่อกับนาฬิกาของคุณ",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -24,7 +25,10 @@
       "permissions": [
         "android.permission.BLUETOOTH_SCAN",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -57,7 +61,15 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
-    }
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "e0c1a2b4-9f36-43c0-9d86-181bc55b67fd"
+      }
+    },
+    "owner": "armmers"
   }
 }

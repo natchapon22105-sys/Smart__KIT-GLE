@@ -111,9 +111,23 @@ npm install && npm run dev           # http://localhost:4000/api/ping
 cd frontend && cp .env.example .env   # EXPO_PUBLIC_API_URL: เว็บ=http://localhost:4000 | Android emulator=http://10.0.2.2:4000 | มือถือจริง=http://<IP คอม>:4000
 npm install && npx expo install --fix
 npm run web                          # ทดสอบบนเว็บ (BLE = จำลอง)
-npx expo run:android                 # มือถือ + BLE จริง (dev build) ตั้ง EXPO_PUBLIC_USE_MOCK_BLE=false
+npx expo start --go                  # ทดสอบใน Expo Go (ตั้ง EXPO_PUBLIC_USE_MOCK_BLE=true)
+npx expo run:android                 # Android dev build; BLE จริงให้ตั้ง EXPO_PUBLIC_USE_MOCK_BLE=false
+npx expo run:ios                     # iOS dev build ในเครื่อง; ต้องใช้ macOS + Xcode
 ```
 มือถือจริงต่อ backend: ตั้ง `EXPO_PUBLIC_API_URL` เป็น IP เครื่องคอมในวง Wi-Fi เดียวกัน และเพิ่ม origin ใน `CORS_ORIGINS` ของ backend
+Expo Go ใช้ทดสอบ UI/API และ BLE จำลองเท่านั้น; BLE จริงต้องใช้ dev build. บน Windows ยังรัน `npx expo run:ios` ในเครื่องไม่ได้ ต้องใช้ Mac + Xcode หรือเตรียม EAS Build สำหรับ iOS
+
+### iOS development build จาก Windows ด้วย EAS
+มี `frontend/eas.json` profile `development` แล้ว; ต้องมี Expo account และ Apple Developer Program สำหรับ signing/install บน iPhone จริง:
+```bash
+cd frontend
+npx eas-cli login
+npx eas-cli init                       # ผูกโปรเจกต์กับ Expo account ครั้งแรก
+npx eas-cli build --platform ios --profile development
+npx expo start --dev-client            # เปิด Metro หลังติดตั้ง build บน iPhone
+```
+สำหรับทดสอบ UI ให้คง `EXPO_PUBLIC_USE_MOCK_BLE=true`; เมื่อต้องทดสอบ BLE จริงให้ตั้งเป็น `false` ก่อนเริ่ม Metro และต้องมีเฟิร์มแวร์/โปรโตคอล BLE ที่ตรงกับแอปแล้ว (ปัจจุบัน UUID/payload ยังเป็น placeholder). อย่าส่ง Apple password หรือ signing certificate ในแชตหรือ commit ลง Git
 
 ## 8. หมายเหตุออกแบบสำคัญ
 - UI **ห้ามเรียก BLE ตรง** ให้ผ่าน `getBleService()` เท่านั้น (สลับ mock/real และรองรับเว็บ)
