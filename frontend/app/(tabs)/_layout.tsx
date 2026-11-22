@@ -4,7 +4,7 @@ import { useAuth } from '@/services/auth/AuthContext';
 
 /**
  * แถบเมนูล่างเป็นแบบกำหนดเอง (BottomNav) ตาม Figma: โปรไฟล์ · MediRemind · หน้าหลัก · Health · ตั้งค่า
- * หน้า family ไม่อยู่บนแถบเมนู (เข้าจากปุ่มเพิ่มคนและช่อง Family Link ในหน้าหลัก) จึงซ่อนด้วย href: null
+ * หน้า family ไม่อยู่บนแถบเมนู (เข้าจากปุ่มเพิ่มคนและช่อง Family Link ในหน้าหลัก) — BottomNav วาดเฉพาะ 5 ปุ่มที่กำหนด
  */
 export default function TabsLayout() {
   const { user, loading } = useAuth();
@@ -21,7 +21,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="home" options={{ title: 'หน้าหลัก' }} />
       <Tabs.Screen name="health" options={{ title: 'Health status' }} />
       <Tabs.Screen name="device" options={{ title: 'ตั้งค่า' }} />
-      <Tabs.Screen name="family" options={{ href: null, title: 'Family Link' }} />
+      {/* ไม่ใส่ href: null — เคยทำให้การ push ไป /family เด้งไปหน้าโปรไฟล์ (ทดสอบบน iPhone) แถบเมนูล่างเป็นแบบกำหนดเอง (BottomNav) แสดงเฉพาะ 5 ปุ่มอยู่แล้ว หน้า family จึงไม่โผล่บนแถบเมนู */}
+      <Tabs.Screen name="family" options={{ title: 'Family Link' }} />
     </Tabs>
   );
 }
