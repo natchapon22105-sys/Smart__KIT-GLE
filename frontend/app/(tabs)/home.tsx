@@ -17,6 +17,7 @@ import {
   medications,
   type MedicationDoseLog,
 } from '@/services/medications';
+import { family } from '@/services/family';
 import { notify } from '@/utils/notify';
 import { homeColors } from '@/theme/tokens';
 
@@ -35,6 +36,7 @@ export default function Home() {
   const [medicationError, setMedicationError] = useState(false);
   const [doseStatusSaving, setDoseStatusSaving] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const [familyInfo, setFamilyInfo] = useState<{ incoming: number; connected: number } | null>(null);
 
   const logoSize = Math.min(width, 520) * 0.92;
 
@@ -61,6 +63,20 @@ export default function Home() {
         .catch(() => {
           if (active) setMedicationError(true);
         });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  // แจ้งเตือน Family Link: จำนวนคำขอที่รอตอบ + คนที่เชื่อมแล้ว (โหลดใหม่ทุกครั้งที่กลับมาหน้านี้)
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      family
+        .links()
+        .then((l) => active && setFamilyInfo({ incoming: l.incoming.length, connected: l.connected.length }))
+        .catch(() => active && setFamilyInfo(null));
       return () => {
         active = false;
       };
@@ -156,6 +172,8 @@ export default function Home() {
             onHealth={() => router.push('/(tabs)/health')}
             onChat={() => notify('ยังไม่เปิดใช้งาน', 'ฟีเจอร์ Chat for family ยังไม่เปิดให้ใช้งานในเวอร์ชันนี้')}
             onFamily={() => router.push('/(tabs)/family')}
+            familyIncoming={familyInfo?.incoming ?? 0}
+            familyConnected={familyInfo?.connected ?? null}
           />
         </View>
       </ScrollView>

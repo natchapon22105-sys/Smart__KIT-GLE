@@ -12,11 +12,14 @@ function Tile({
   icon,
   title,
   onPress,
+  badge,
   children,
 }: {
   icon: IconName;
   title: string;
   onPress: () => void;
+  /** จุดแจ้งเตือนสีแดงมุมขวาบนของช่อง (0/undefined = ไม่แสดง) */
+  badge?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -30,6 +33,11 @@ function Tile({
         </View>
         <View style={styles.tileLine} />
         {children}
+        {badge ? (
+          <View style={styles.badge} accessibilityLabel={`${badge} คำขอใหม่`}>
+            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -84,6 +92,8 @@ export function FeatureGrid({
   onHealth,
   onChat,
   onFamily,
+  familyIncoming = 0,
+  familyConnected = null,
 }: {
   steps: number;
   spo2: number;
@@ -98,6 +108,10 @@ export function FeatureGrid({
   onHealth: () => void;
   onChat: () => void;
   onFamily: () => void;
+  /** จำนวนคำขอเชื่อมต่อ Family Link ที่รอฉันตอบ (แสดงเป็นแจ้งเตือนที่ช่อง) */
+  familyIncoming?: number;
+  /** จำนวนคนที่เชื่อมต่อแล้ว (null = ยังโหลดไม่เสร็จ/โหลดไม่ได้) */
+  familyConnected?: number | null;
 }) {
   const doseSubtitle = medicationError
     ? 'โหลดคิวไม่สำเร็จ'
@@ -192,15 +206,27 @@ export function FeatureGrid({
           </View>
         </Tile>
 
-        <Tile icon="people-circle-outline" title="Family Link" onPress={onFamily}>
+        <Tile icon="people-circle-outline" title="Family Link" onPress={onFamily} badge={familyIncoming}>
           <View style={styles.inner}>
             <AvatarStack />
             <View style={{ flex: 1, marginLeft: 8 }}>
               <View style={styles.pill} />
             </View>
           </View>
-          <View style={[styles.skel, { width: '62%', marginTop: 8 }]} />
-          <View style={[styles.skel, { width: '78%', marginTop: 6, alignSelf: 'flex-end' }]} />
+          {familyConnected === null ? (
+            <>
+              <View style={[styles.skel, { width: '62%', marginTop: 8 }]} />
+              <View style={[styles.skel, { width: '78%', marginTop: 6, alignSelf: 'flex-end' }]} />
+            </>
+          ) : (
+            // TODO(figma): ข้อความสถานะ/แจ้งเตือนในช่อง Family Link ไม่มีในดีไซน์ — เพิ่มชั่วคราว
+            <>
+              <Text style={styles.familyText}>
+                {familyIncoming > 0 ? `${familyIncoming} คำขอใหม่ รอคุณตอบ` : 'ไม่มีคำขอใหม่'}
+              </Text>
+              <Text style={styles.familySub}>เชื่อมต่อแล้ว {familyConnected} คน</Text>
+            </>
+          )}
         </Tile>
       </View>
     </GlassPanel>
@@ -265,5 +291,22 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.95)',
   },
   pill: { height: 22, minWidth: 56, flex: 1, marginLeft: 8, borderRadius: 11, backgroundColor: 'rgba(220,220,220,0.85)' },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+    backgroundColor: homeColors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.9)',
+  },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '900' },
+  familyText: { marginTop: 8, fontSize: 9, fontWeight: '800', color: homeColors.textMain },
+  familySub: { marginTop: 3, fontSize: 8, color: homeColors.textDim },
   skel: { height: 5, borderRadius: 3, backgroundColor: 'rgba(220,220,220,0.7)' },
 });
