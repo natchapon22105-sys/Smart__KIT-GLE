@@ -36,6 +36,37 @@ familyRouter.get('/links', async (req: AuthedRequest, res) => {
   });
 });
 
+/**
+ * ค้นหาผู้ใช้เพื่อส่งคำขอ (หน้า search Username or Email): username ขึ้นต้นด้วยคำค้น หรืออีเมลตรงทุกตัว
+ * ต้องพิมพ์ ≥ 2 ตัว คืนเฉพาะ username/ชื่อที่แสดง (ไม่เปิดเผยอีเมล) สูงสุด 20 รายการ
+ * relation: none = ยังไม่เคยส่ง · sent = ส่งคำขอแล้วรอตอบ · incoming = เขาส่งมาหาฉัน · linked = เชื่อมต่อแล้ว
+ */
+familyRouter.get('/search', rateLimit({ windowMs: 60_000, max: 60 }), async (req: AuthedRequest, res) => {
+  const q = String(req.query.q ?? '').trim().toLowerCase().replace(/^@/, '').slice(0, 255);
+  if (q.length < 2) return res.json({ users: [] });
+  const like = `${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const [rows] = await usersDb.query<RowDataPacket[]>(
+    `SELECT u.id AS userId, u.username, u.display_name AS displayName,
+            fl.status, fl.owner_user_id AS ownerId
+       FROM users u
+       LEFT JOIN family_links fl
+         ON (fl.owner_user_id = ? AND fl.member_user_id = u.id)
+         OR (fl.owner_user_id = u.id AND fl.member_user_id = ?)
+      WHERE u.id <> ? AND (u.username LIKE ? OR u.email = ?)
+      ORDER BY u.username LIMIT 20`,
+    [req.userId, req.userId, req.userId, like, q],
+  );
+  res.json({
+    users: rows.map((r) => ({
+      userId: r.userId,
+      username: r.username,
+      displayName: r.displayName,
+      relation:
+        r.status === 'accepted' ? 'linked' : r.status === 'pending' ? (r.ownerId === req.userId ? 'sent' : 'incoming') : 'none',
+    })),
+  });
+});
+
 /** ส่งคำขอเชื่อมต่อ: ผู้ใช้ (owner) เชิญสมาชิกครอบครัว (member) ด้วย username หรืออีเมล เพื่อให้เขาดูข้อมูลของฉัน */
 familyRouter.post(
   '/invite',

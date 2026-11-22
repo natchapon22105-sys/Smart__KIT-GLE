@@ -7,7 +7,11 @@ export type FamilyConnected = FamilyPerson & {
 };
 export type FamilyLinks = { waiting: FamilyPerson[]; incoming: FamilyPerson[]; connected: FamilyConnected[] };
 
+export type FamilyRelation = 'none' | 'sent' | 'incoming' | 'linked';
+export type FamilySearchUser = { userId: number; username: string; displayName: string; relation: FamilyRelation };
+
 export const family = {
+  search: async (q: string) => (await api.get<{ users: FamilySearchUser[] }>(`/family/search?q=${encodeURIComponent(q)}`)).users,
   links: () => api.get<FamilyLinks>('/family/links'),
   /** ส่งคำขอด้วย username หรืออีเมล */
   invite: (query: string) => api.post('/family/invite', { query }),
