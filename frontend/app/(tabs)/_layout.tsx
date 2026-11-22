@@ -17,14 +17,15 @@ export default function TabsLayout() {
       tabBar={(props) => <BottomNav {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      {/* profile = หน้าเดิมที่ยังไม่มีดีไซน์ ตอนนี้ไม่มีปุ่มบนแถบเมนู (ไอคอนรูปคนพาไป Family Link) */}
-      <Tabs.Screen name="profile" options={{ title: 'โปรไฟล์' }} />
-      <Tabs.Screen name="medi-remind" options={{ title: 'MediRemind' }} />
+      {/* home ไว้ก่อน — ถ้านำทางไปหน้าที่หาไม่เจอ แอปจะถอยไปหน้าแรกของรายการนี้ (เคยตกไปหน้าโปรไฟล์) */}
       <Tabs.Screen name="home" options={{ title: 'หน้าหลัก' }} />
+      <Tabs.Screen name="family" options={{ title: 'Family Link' }} />
+      <Tabs.Screen name="family-search" options={{ title: 'ค้นหาสมาชิก' }} />
+      <Tabs.Screen name="medi-remind" options={{ title: 'MediRemind' }} />
       <Tabs.Screen name="health" options={{ title: 'Health status' }} />
       <Tabs.Screen name="device" options={{ title: 'ตั้งค่า' }} />
-      {/* ไม่ใส่ href: null — เคยทำให้การ push ไป /family เด้งไปหน้าโปรไฟล์ (ทดสอบบน iPhone) แถบเมนูล่างเป็นแบบกำหนดเอง (BottomNav) แสดงเฉพาะ 5 ปุ่มอยู่แล้ว หน้า family จึงไม่โผล่บนแถบเมนู */}
-      <Tabs.Screen name="family" options={{ title: 'Family Link' }} />
+      {/* profile = หน้าเดิมที่ยังไม่มีดีไซน์ ไม่มีปุ่มบนแถบเมนู (ไอคอนรูปคนพาไป Family Link) */}
+      <Tabs.Screen name="profile" options={{ title: 'โปรไฟล์' }} />
     </Tabs>
   );
 }
