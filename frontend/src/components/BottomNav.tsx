@@ -8,9 +8,9 @@ import { homeColors } from '@/theme/tokens';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 type Props = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
-/** ลำดับและไอคอนของแถบเมนูล่าง 5 ปุ่มตาม Figma (ซ้าย → ขวา) — name = ชื่อไฟล์ใน app/(tabs)/ */
+/** ลำดับและไอคอนของแถบเมนูล่าง 5 ปุ่มตาม Figma (ซ้าย → ขวา: Family Link · MediRemind · หน้าหลัก · Health · Setting) — name = ชื่อไฟล์ใน app/(tabs)/ */
 const ITEMS: { name: string; icon: IconName; label: string }[] = [
-  { name: 'profile', icon: 'person', label: 'โปรไฟล์' },
+  { name: 'family', icon: 'person', label: 'Family Link' }, // ไอคอนรูปคน = ทางเข้า Family Link
   { name: 'medi-remind', icon: 'time-outline', label: 'MediRemind' },
   { name: 'home', icon: 'home', label: 'หน้าหลัก' },
   { name: 'health', icon: 'stats-chart', label: 'Health status' },
@@ -24,8 +24,8 @@ const ITEMS: { name: string; icon: IconName; label: string }[] = [
 export function BottomNav({ state, navigateToTab }: Props) {
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
-  // หน้า Family Link ไม่มีปุ่มบนแถบ — ใน Figma ขีดเส้นใต้ไอคอนโปรไฟล์ไว้
-  const activeName = current === 'family' || current === 'family-search' ? 'profile' : current;
+  // หน้าค้นหาคน (family-search) เป็นหน้าย่อยของ Family Link → ขีดเส้นใต้ไอคอนรูปคนเหมือนกัน
+  const activeName = current === 'family-search' ? 'family' : current;
 
   return (
     <View pointerEvents="box-none" style={[styles.outer, { paddingBottom: Math.max(insets.bottom, 12) }]}>

@@ -3,7 +3,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { useAuth } from '@/services/auth/AuthContext';
 
 /**
- * แถบเมนูล่างเป็นแบบกำหนดเอง (BottomNav) ตาม Figma: โปรไฟล์ · MediRemind · หน้าหลัก · Health · ตั้งค่า
+ * แถบเมนูล่างเป็นแบบกำหนดเอง (BottomNav) ตาม Figma: Family Link (ไอคอนรูปคน) · MediRemind · หน้าหลัก · Health · Setting
  * หน้า family ไม่อยู่บนแถบเมนู (เข้าจากปุ่มเพิ่มคนและช่อง Family Link ในหน้าหลัก) — BottomNav วาดเฉพาะ 5 ปุ่มที่กำหนด
  */
 export default function TabsLayout() {
@@ -13,9 +13,11 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      initialRouteName="home"
       tabBar={(props) => <BottomNav {...props} />}
       screenOptions={{ headerShown: false }}
     >
+      {/* profile = หน้าเดิมที่ยังไม่มีดีไซน์ ตอนนี้ไม่มีปุ่มบนแถบเมนู (ไอคอนรูปคนพาไป Family Link) */}
       <Tabs.Screen name="profile" options={{ title: 'โปรไฟล์' }} />
       <Tabs.Screen name="medi-remind" options={{ title: 'MediRemind' }} />
       <Tabs.Screen name="home" options={{ title: 'หน้าหลัก' }} />
