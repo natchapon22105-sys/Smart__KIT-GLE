@@ -47,7 +47,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "KIT - GLE ขอเข้าถึงรูปภาพเพื่อใช้เป็นรูปยาใน MediRemind"
+          "photosPermission": "KIT - GLE ขอเข้าถึงรูปภาพเพื่อใช้ในแชทครอบครัวและ MediRemind"
         }
       ],
       "expo-secure-store",

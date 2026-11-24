@@ -1,8 +1,38 @@
 import { Router } from 'express';
 import type { RowDataPacket } from 'mysql2';
+import { z } from 'zod';
 import { devicesDb } from '../db/pools.js';
+import { usersDb } from '../db/pools.js';
+import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 
 export const devicesRouter = Router();
+
+devicesRouter.post('/pair', requireAuth, async (req: AuthedRequest, res) => {
+  const parsed = z.object({
+    deviceId: z.string().trim().min(1).max(128),
+    name: z.string().trim().max(80).optional(),
+  }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'ข้อมูลนาฬิกาไม่ถูกต้อง' });
+  await usersDb.query('DELETE FROM user_devices WHERE user_id = ?', [req.userId]);
+  await usersDb.query(
+    `INSERT INTO user_devices (user_id, device_model_code, ble_id, nickname, last_connected_at)
+     VALUES (?, 'KIT-GLE', ?, ?, NOW())`,
+    [req.userId, parsed.data.deviceId, parsed.data.name ?? null],
+  );
+  res.json({ connected: true });
+});
+
+devicesRouter.delete('/pair', requireAuth, async (req: AuthedRequest, res) => {
+  const parsed = z.object({ deviceId: z.string().trim().min(1).max(128).optional() }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'ข้อมูลนาฬิกาไม่ถูกต้อง' });
+  await usersDb.query(
+    parsed.data.deviceId
+      ? 'DELETE FROM user_devices WHERE user_id = ? AND ble_id = ?'
+      : 'DELETE FROM user_devices WHERE user_id = ?',
+    parsed.data.deviceId ? [req.userId, parsed.data.deviceId] : [req.userId],
+  );
+  res.json({ connected: false });
+});
 
 /** รายการรุ่นอุปกรณ์ที่รองรับ */
 devicesRouter.get('/models', async (_req, res) => {

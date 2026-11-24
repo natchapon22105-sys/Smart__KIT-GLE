@@ -19,14 +19,20 @@ const parseId = (v: string | string[]) => (typeof v === 'string' && /^\d+$/.test
 familyRouter.get('/links', async (req: AuthedRequest, res) => {
   const [rows] = await usersDb.query<RowDataPacket[]>(
     `SELECT fl.id, fl.status, fl.owner_user_id AS ownerId,
-            u.id AS userId, u.username, u.display_name AS displayName
+            u.id AS userId, u.username, u.display_name AS displayName, u.avatar_data AS avatar
        FROM family_links fl
        JOIN users u ON u.id = IF(fl.owner_user_id = ?, fl.member_user_id, fl.owner_user_id)
       WHERE (fl.owner_user_id = ? OR fl.member_user_id = ?) AND fl.status IN ('pending','accepted')
       ORDER BY fl.created_at DESC`,
     [req.userId, req.userId, req.userId],
   );
-  const row = (r: RowDataPacket) => ({ id: r.id, userId: r.userId, username: r.username, displayName: r.displayName });
+  const row = (r: RowDataPacket) => ({
+    id: r.id,
+    userId: r.userId,
+    username: r.username,
+    displayName: r.displayName,
+    avatar: r.avatar,
+  });
   res.json({
     waiting: rows.filter((r) => r.status === 'pending' && r.ownerId === req.userId).map(row),
     incoming: rows.filter((r) => r.status === 'pending' && r.ownerId !== req.userId).map(row),
@@ -46,7 +52,7 @@ familyRouter.get('/search', rateLimit({ windowMs: 60_000, max: 60 }), async (req
   if (q.length < 2) return res.json({ users: [] });
   const like = `${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
   const [rows] = await usersDb.query<RowDataPacket[]>(
-    `SELECT u.id AS userId, u.username, u.display_name AS displayName,
+    `SELECT u.id AS userId, u.username, u.display_name AS displayName, u.avatar_data AS avatar,
             fl.status, fl.owner_user_id AS ownerId
        FROM users u
        LEFT JOIN family_links fl
@@ -61,6 +67,7 @@ familyRouter.get('/search', rateLimit({ windowMs: 60_000, max: 60 }), async (req
       userId: r.userId,
       username: r.username,
       displayName: r.displayName,
+      avatar: r.avatar,
       relation:
         r.status === 'accepted' ? 'linked' : r.status === 'pending' ? (r.ownerId === req.userId ? 'sent' : 'incoming') : 'none',
     })),
@@ -124,6 +131,104 @@ familyRouter.delete('/:id', async (req: AuthedRequest, res) => {
   if (r.affectedRows === 0) return res.status(404).json({ error: 'ไม่พบรายการ' });
   res.json({ ok: true });
 });
+
+/** อ่านประวัติข้อความได้เฉพาะสมาชิก Family Link ที่เชื่อมต่ออยู่ */
+familyRouter.get('/:id/messages', rateLimit({ windowMs: 60_000, max: 60 }), async (req: AuthedRequest, res) => {
+  const linkId = parseId(req.params.id);
+  if (!linkId) return res.status(400).json({ error: 'รหัสไม่ถูกต้อง' });
+
+  const [links] = await usersDb.query<RowDataPacket[]>(
+    "SELECT id FROM family_links WHERE id = ? AND status = 'accepted' AND (owner_user_id = ? OR member_user_id = ?)",
+    [linkId, req.userId, req.userId],
+  );
+  if (!links[0]) return res.status(404).json({ error: 'ไม่พบสมาชิกครอบครัวที่เชื่อมต่ออยู่' });
+
+  const afterValue = req.query.afterId;
+  const afterId =
+    afterValue === undefined
+      ? null
+      : typeof afterValue === 'string' && /^\d+$/.test(afterValue)
+        ? Number(afterValue)
+        : NaN;
+  if (afterId !== null && (!Number.isSafeInteger(afterId) || afterId < 0)) {
+    return res.status(400).json({ error: 'รหัสข้อความไม่ถูกต้อง' });
+  }
+
+  const [rows] = await usersDb.query<RowDataPacket[]>(
+    `SELECT m.id, m.sender_user_id AS senderId,
+            COALESCE(NULLIF(u.display_name, ''), u.username) AS senderName,
+            m.body, m.image_data AS imageData, m.created_at AS createdAt
+       FROM family_messages m
+       JOIN users u ON u.id = m.sender_user_id
+      WHERE m.family_link_id = ? ${afterId === null ? '' : 'AND m.id > ?'}
+      ORDER BY m.id ${afterId === null ? 'DESC' : 'ASC'}
+      LIMIT ?`,
+    afterId === null ? [linkId, 50] : [linkId, afterId, 100],
+  );
+  const messages = afterId === null ? rows.reverse() : rows;
+  res.json({
+    messages: messages.map((message) => ({
+      id: Number(message.id),
+      senderId: Number(message.senderId),
+      senderName: message.senderName,
+      body: message.body,
+      imageData: message.imageData,
+      createdAt: message.createdAt,
+    })),
+  });
+});
+
+/** ส่งข้อความหรือรูปภาพให้สมาชิกที่เชื่อมต่ออยู่ */
+familyRouter.post(
+  '/:id/messages',
+  rateLimit({ windowMs: 60_000, max: 30 }),
+  async (req: AuthedRequest, res) => {
+    const linkId = parseId(req.params.id);
+    const parsed = z
+      .object({
+        body: z.string().trim().max(2000).optional(),
+        imageData: z
+          .string()
+          .max(1_400_000)
+          .regex(/^data:image\/(?:jpeg|jpg|png|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/i)
+          .optional(),
+      })
+      .refine((message) => Boolean(message.body || message.imageData))
+      .safeParse(req.body);
+    if (!linkId || !parsed.success) return res.status(400).json({ error: 'ข้อความหรือรูปภาพไม่ถูกต้อง' });
+
+    const [links] = await usersDb.query<RowDataPacket[]>(
+      "SELECT id FROM family_links WHERE id = ? AND status = 'accepted' AND (owner_user_id = ? OR member_user_id = ?)",
+      [linkId, req.userId, req.userId],
+    );
+    if (!links[0]) return res.status(404).json({ error: 'ไม่พบสมาชิกครอบครัวที่เชื่อมต่ออยู่' });
+
+    const body = parsed.data.body || null;
+    const imageData = parsed.data.imageData || null;
+    const [inserted] = await usersDb.query<ResultSetHeader>(
+      'INSERT INTO family_messages (family_link_id, sender_user_id, body, image_data) VALUES (?, ?, ?, ?)',
+      [linkId, req.userId, body, imageData],
+    );
+    const [rows] = await usersDb.query<RowDataPacket[]>(
+      `SELECT m.id, m.sender_user_id AS senderId,
+              COALESCE(NULLIF(u.display_name, ''), u.username) AS senderName,
+              m.body, m.image_data AS imageData, m.created_at AS createdAt
+         FROM family_messages m
+         JOIN users u ON u.id = m.sender_user_id
+        WHERE m.id = ?`,
+      [inserted.insertId],
+    );
+    const message = rows[0];
+    res.status(201).json({
+      id: Number(message.id),
+      senderId: Number(message.senderId),
+      senderName: message.senderName,
+      body: message.body,
+      imageData: message.imageData,
+      createdAt: message.createdAt,
+    });
+  },
+);
 
 /** รายชื่อผู้ใช้ที่ฉันดูแลอยู่ */
 familyRouter.get('/watching', async (req: AuthedRequest, res) => {

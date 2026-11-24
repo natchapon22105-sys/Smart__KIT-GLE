@@ -1,6 +1,6 @@
 import { api } from '@/services/api/client';
 
-export type FamilyPerson = { id: number; userId: number; username: string; displayName: string };
+export type FamilyPerson = { id: number; userId: number; username: string; displayName: string; avatar: string | null };
 export type FamilyConnected = FamilyPerson & {
   /** sharing = เขาดูข้อมูลฉัน · watching = ฉันดูข้อมูลเขา */
   direction: 'sharing' | 'watching';
@@ -8,7 +8,13 @@ export type FamilyConnected = FamilyPerson & {
 export type FamilyLinks = { waiting: FamilyPerson[]; incoming: FamilyPerson[]; connected: FamilyConnected[] };
 
 export type FamilyRelation = 'none' | 'sent' | 'incoming' | 'linked';
-export type FamilySearchUser = { userId: number; username: string; displayName: string; relation: FamilyRelation };
+export type FamilySearchUser = {
+  userId: number;
+  username: string;
+  displayName: string;
+  avatar: string | null;
+  relation: FamilyRelation;
+};
 
 export const family = {
   search: async (q: string) => (await api.get<{ users: FamilySearchUser[] }>(`/family/search?q=${encodeURIComponent(q)}`)).users,

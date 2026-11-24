@@ -15,8 +15,30 @@ export type Profile = {
 };
 export type ProfileInput = Pick<Profile, 'displayName' | 'birthDate' | 'gender' | 'heightCm' | 'weightKg'>;
 
+export type MedicationStatus = 'taken' | 'pending' | 'missed' | 'skipped';
+export type PublicProfile = Pick<Profile, 'username' | 'displayName' | 'avatar' | 'birthDate' | 'heightCm' | 'weightKg'> & {
+  userId: number;
+  watchConnected: boolean;
+  canViewMeds: boolean;
+  canViewHealth: boolean;
+  medicationStatus: {
+    taken: number;
+    pending: number;
+    items: Array<{ name: string; timeOfDay: string; status: MedicationStatus }>;
+  } | null;
+  healthStatus: {
+    heartRate: number | null;
+    spo2: number | null;
+    steps: number | null;
+    temperature: number | null;
+    recordedAt: string | null;
+  } | null;
+};
+
 export const profileApi = {
   get: async () => (await api.get<{ profile: Profile }>('/profile')).profile,
+  getUser: async (userId: number) =>
+    (await api.get<{ profile: PublicProfile }>(`/profile/users/${userId}`)).profile,
   save: async (v: ProfileInput) => (await api.put<{ profile: Profile }>('/profile', v)).profile,
   setAvatar: async (image: string | null) => (await api.put<{ avatar: string | null }>('/profile/avatar', { image })).avatar,
   report: (message: string) => api.post('/reports', { message }),

@@ -21,6 +21,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="home" options={{ title: 'หน้าหลัก' }} />
       <Tabs.Screen name="family" options={{ title: 'Family Link' }} />
       <Tabs.Screen name="family-search" options={{ title: 'ค้นหาสมาชิก' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat For Family' }} />
+      <Tabs.Screen name="user" options={{ title: 'User Profile' }} />
       <Tabs.Screen name="medi-remind" options={{ title: 'MediRemind' }} />
       <Tabs.Screen name="health" options={{ title: 'Health status' }} />
       <Tabs.Screen name="device" options={{ title: 'ตั้งค่า' }} />

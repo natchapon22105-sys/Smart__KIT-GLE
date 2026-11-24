@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassPanel } from '@/components/home/GlassPanel';
 import { familyColors } from '@/theme/tokens';
@@ -35,21 +35,43 @@ export function GroupLabel({ color, text }: { color: string; text: string }) {
   );
 }
 
-export type RowAction = { text: string; kind: 'cancel' | 'unlink' | 'accept' | 'decline'; onPress: () => void };
+export type RowAction = { text: string; kind: 'cancel' | 'unlink' | 'accept' | 'decline' | 'chat'; onPress: () => void };
 
 /** แถวบุคคล: อวาตาร์ + ชื่อ + @username + ปุ่มด้านขวา (1–2 ปุ่ม) */
-export function PersonRow({ person, actions }: { person: FamilyPerson; actions: RowAction[] }) {
+export function PersonRow({
+  person,
+  actions,
+  onPressProfile,
+}: {
+  person: FamilyPerson;
+  actions: RowAction[];
+  onPressProfile?: () => void;
+}) {
   return (
     <GlassPanel radius={32} tint={familyColors.row} border={familyColors.rowBorder} style={s.row}>
-      <View style={s.avatar} />
-      <View style={{ flex: 1 }}>
-        <Text style={s.name} numberOfLines={1}>{person.displayName || person.username}</Text>
-        <Text style={s.handle} numberOfLines={1}>@{person.username}</Text>
-      </View>
+      <Pressable
+        onPress={onPressProfile}
+        disabled={!onPressProfile}
+        accessibilityRole="button"
+        accessibilityLabel={`เปิดโปรไฟล์ ${person.displayName || person.username}`}
+        style={s.profile}
+      >
+        <View style={s.avatar}>
+          {person.avatar ? (
+            <Image source={{ uri: person.avatar }} style={s.avatarImage} resizeMode="cover" />
+          ) : (
+            <Ionicons name="person" size={20} color="rgba(40,50,45,0.72)" />
+          )}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={s.name} numberOfLines={1}>{person.displayName || person.username}</Text>
+          <Text style={s.handle} numberOfLines={1}>@{person.username}</Text>
+        </View>
+      </Pressable>
       <View style={{ gap: 6 }}>
         {actions.map((a) => (
           <Pressable key={a.text} onPress={a.onPress} accessibilityRole="button" style={[s.btn, btnStyle[a.kind]]}>
-            <Text style={[s.btnText, a.kind === 'cancel' && { color: '#fff' }]}>{a.text}</Text>
+            <Text style={[s.btnText, ['cancel', 'chat'].includes(a.kind) && { color: '#fff' }]}>{a.text}</Text>
           </Pressable>
         ))}
       </View>
@@ -62,6 +84,7 @@ const btnStyle = StyleSheet.create({
   unlink: { backgroundColor: '#FF0000', minWidth: 96, height: 27 },
   accept: { backgroundColor: '#1BF21B' },
   decline: { backgroundColor: 'rgba(170,176,174,0.7)' },
+  chat: { backgroundColor: 'rgba(58,138,90,0.9)' },
 });
 
 const s = StyleSheet.create({
@@ -82,7 +105,9 @@ const s = StyleSheet.create({
   labelBar: { width: 55, height: 9, borderRadius: 5, marginRight: 7 },
   labelText: { color: '#fff', fontWeight: '800', fontSize: 10 },
   row: { marginHorizontal: 33, minHeight: 67, flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 17, gap: 10 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#D9D9D9' },
+  profile: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  avatar: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', backgroundColor: '#D9D9D9', alignItems: 'center', justifyContent: 'center' },
+  avatarImage: { width: '100%', height: '100%' },
   name: { color: '#fff', fontSize: 19, fontWeight: '600', lineHeight: 22 },
   handle: { color: 'rgba(255,255,255,0.45)', fontSize: 11, lineHeight: 13 },
   btn: { minWidth: 80, height: 26, paddingHorizontal: 12, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },

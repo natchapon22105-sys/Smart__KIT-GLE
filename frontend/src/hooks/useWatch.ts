@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { uploadHealthSample } from '@/services/health';
 import { getBleService, type ConnectionState, type HealthSample, type WatchDevice } from '@/services/ble';
+import { api } from '@/services/api/client';
 
 /**
  * สถานะนาฬิกาสำหรับหน้าจอ — ครอบ BleService (UI ห้ามเรียก BLE ตรง)
@@ -35,6 +36,7 @@ export function useWatch() {
         return;
       }
       await ble.connect(first.id);
+      await api.post('/devices/pair', { deviceId: first.id, name: first.name }).catch(() => undefined);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'เชื่อมต่อนาฬิกาไม่สำเร็จ');
     }
@@ -44,6 +46,7 @@ export function useWatch() {
     setError(null);
     setHealth(null);
     await ble.disconnect();
+    await api.del('/devices/pair').catch(() => undefined);
   }, [ble]);
 
   return {

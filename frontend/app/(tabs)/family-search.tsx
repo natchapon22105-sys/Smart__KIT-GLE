@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -56,6 +56,9 @@ export default function FamilySearch() {
     }
   };
 
+  const openProfile = (userId: number) =>
+    router.push({ pathname: '/(tabs)/user/[userId]', params: { userId: String(userId) } });
+
   const back = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/family'));
   const term = q.trim();
 
@@ -98,11 +101,24 @@ export default function FamilySearch() {
               const can = item.relation === 'none';
               return (
                 <GlassPanel radius={30} tint={familyColors.row} border={familyColors.rowBorder} style={s.row}>
-                  <View style={s.avatar} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.name} numberOfLines={1}>{item.displayName || item.username}</Text>
-                    <Text style={s.handle} numberOfLines={1}>@{item.username}</Text>
-                  </View>
+                  <Pressable
+                    onPress={() => openProfile(item.userId)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`เปิดโปรไฟล์ ${item.displayName || item.username}`}
+                    style={s.person}
+                  >
+                    <View style={s.avatar}>
+                      {item.avatar ? (
+                        <Image source={{ uri: item.avatar }} style={s.avatarImage} resizeMode="cover" />
+                      ) : (
+                        <Ionicons name="person" size={20} color="rgba(40,50,45,0.72)" />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.name} numberOfLines={1}>{item.displayName || item.username}</Text>
+                      <Text style={s.handle} numberOfLines={1}>@{item.username}</Text>
+                    </View>
+                  </Pressable>
                   <Pressable
                     onPress={() => send(item)}
                     disabled={!can || sending !== null}
@@ -138,7 +154,9 @@ const s = StyleSheet.create({
   panel: { flex: 1, marginHorizontal: 20, marginTop: 12 },
   hint: { color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginTop: 24, fontSize: 12 },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 69, paddingVertical: 13, paddingHorizontal: 17, gap: 10 },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#D9D9D9' },
+  person: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  avatar: { width: 42, height: 42, borderRadius: 21, overflow: 'hidden', backgroundColor: '#D9D9D9', alignItems: 'center', justifyContent: 'center' },
+  avatarImage: { width: '100%', height: '100%' },
   name: { color: '#fff', fontSize: 19, fontWeight: '800', lineHeight: 22 },
   handle: { color: 'rgba(255,255,255,0.5)', fontSize: 11, lineHeight: 13 },
   btn: { minWidth: 101, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#5CFF00' },

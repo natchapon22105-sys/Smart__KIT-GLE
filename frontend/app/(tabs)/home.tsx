@@ -187,7 +187,7 @@ export default function Home() {
             onToggleDoseStatus={toggleDoseStatus}
             onMedi={() => router.push('/(tabs)/medi-remind')}
             onHealth={() => router.push('/(tabs)/health')}
-            onChat={() => notify('ยังไม่เปิดใช้งาน', 'ฟีเจอร์ Chat for family ยังไม่เปิดให้ใช้งานในเวอร์ชันนี้')}
+            onChat={() => router.push('/(tabs)/chat')}
             onFamily={() => router.push('/(tabs)/family')}
             familyIncoming={familyInfo?.incoming ?? 0}
             familyConnected={familyInfo?.connected ?? null}

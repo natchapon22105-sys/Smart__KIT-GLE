@@ -50,6 +50,9 @@ export default function Family() {
     ]);
   };
 
+  const openProfile = (person: FamilyPerson) =>
+    router.push({ pathname: '/(tabs)/user/[userId]', params: { userId: String(person.userId) } });
+
   const connected = data?.connected ?? [];
   const waiting = data?.waiting ?? [];
   const incoming = data?.incoming ?? [];
@@ -77,6 +80,7 @@ export default function Family() {
               <PersonRow
                 key={p.id}
                 person={p}
+                onPressProfile={() => openProfile(p)}
                 actions={[
                   { text: 'Accept', kind: 'accept', onPress: () => void run(() => family.respond(p.id, true)) },
                   { text: 'Decline', kind: 'decline', onPress: () => void run(() => family.respond(p.id, false)) },
@@ -92,7 +96,12 @@ export default function Family() {
           <GroupLabel color={familyColors.waiting} text="WAITING FOR REPLY" />
           <View style={{ gap: 10 }}>
             {waiting.map((p) => (
-              <PersonRow key={p.id} person={p} actions={[{ text: 'Cancel', kind: 'cancel', onPress: () => void run(() => family.remove(p.id)) }]} />
+              <PersonRow
+                key={p.id}
+                person={p}
+                onPressProfile={() => openProfile(p)}
+                actions={[{ text: 'Cancel', kind: 'cancel', onPress: () => void run(() => family.remove(p.id)) }]}
+              />
             ))}
           </View>
         </>
@@ -103,7 +112,23 @@ export default function Family() {
           <GroupLabel color={familyColors.connect} text="CONNECT FAMILY" />
           <View style={{ gap: 10 }}>
             {connected.map((p) => (
-              <PersonRow key={p.id} person={p} actions={[{ text: 'UN-LINK', kind: 'unlink', onPress: () => confirmUnlink(p) }]} />
+              <PersonRow
+                key={p.id}
+                person={p}
+                onPressProfile={() => openProfile(p)}
+                actions={[
+                  {
+                    text: 'CHAT',
+                    kind: 'chat',
+                    onPress: () =>
+                      router.push({
+                        pathname: '/(tabs)/chat/[linkId]',
+                        params: { linkId: String(p.id), name: p.displayName || p.username, userId: String(p.userId) },
+                      }),
+                  },
+                  { text: 'UN-LINK', kind: 'unlink', onPress: () => confirmUnlink(p) },
+                ]}
+              />
             ))}
           </View>
         </>
