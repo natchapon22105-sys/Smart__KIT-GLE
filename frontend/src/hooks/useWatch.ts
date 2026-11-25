@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { uploadHealthSample } from '@/services/health';
 import { getBleService, type ConnectionState, type HealthSample, type WatchDevice } from '@/services/ble';
 import { api } from '@/services/api/client';
+import { notify } from '@/utils/notify';
 
 /**
  * สถานะนาฬิกาสำหรับหน้าจอ — ครอบ BleService (UI ห้ามเรียก BLE ตรง)
@@ -19,9 +20,13 @@ export function useWatch() {
       setHealth(sample);
       uploadHealthSample(sample); // เก็บลงฐานข้อมูล (หน่วงเวลา) เพื่อใช้แสดงกราฟหน้า Health status
     });
+    const offFallAlert = ble.subscribeFallAlert(() => {
+      notify('ตรวจพบการล้ม', 'ได้รับสัญญาณแจ้งเตือนจากนาฬิกา SmartWatch');
+    });
     return () => {
       offState();
       offHealth();
+      offFallAlert();
     };
   }, [ble]);
 
@@ -36,6 +41,7 @@ export function useWatch() {
         return;
       }
       await ble.connect(first.id);
+      await ble.syncClock();
       await api.post('/devices/pair', { deviceId: first.id, name: first.name }).catch(() => undefined);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'เชื่อมต่อนาฬิกาไม่สำเร็จ');

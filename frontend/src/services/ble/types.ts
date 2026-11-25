@@ -37,6 +37,8 @@ export interface BleService {
   stopScan(): void;
   connect(deviceId: string): Promise<void>;
   disconnect(): Promise<void>;
+  syncClock(): Promise<void>;
+  subscribeFallAlert(cb: () => void): () => void;
   /** 2. Health status — รับข้อมูลสุขภาพแบบ stream */
   subscribeHealth(cb: (s: HealthSample) => void): () => void;
   /** 1. MediRemind — ส่งตารางเตือนยาไปนาฬิกา */

@@ -1,3 +1,4 @@
+import { PermissionsAndroid, Platform } from 'react-native';
 import { BleManager, Device, Subscription } from 'react-native-ble-plx';
 import { BLE_PROFILE, DEVICE_NAME_PREFIX } from './protocol';
 import type {
@@ -38,18 +39,15 @@ function b64ToBytes(s: string): number[] {
 }
 const utf8 = (s: string) => Array.from(unescape(encodeURIComponent(s)), (c) => c.charCodeAt(0));
 
-/**
- * BLE จริง (เฉพาะ native — ต้องใช้ development build ไม่ใช่ Expo Go)
- * TODO(protocol): รูปแบบ payload ด้านล่างเป็น placeholder ต้องแก้ตามโปรโตคอลนาฬิกาจริง
- */
+/** BLE จริงสำหรับ ESP32-C3 SmartWatch firmware. */
 export class RealBleService implements BleService {
   readonly isMock = false;
   private manager = new BleManager();
   private device: Device | null = null;
   private state: ConnectionState = 'idle';
   private listeners = new Set<(s: ConnectionState) => void>();
-  private healthSub: Subscription | null = null;
-  private healthListeners = new Set<(s: HealthSample) => void>();
+  private fallSub: Subscription | null = null;
+  private fallListeners = new Set<() => void>();
 
   getState() {
     return this.state;
@@ -66,6 +64,7 @@ export class RealBleService implements BleService {
   }
 
   async scan(onFound: (d: WatchDevice) => void, timeoutMs = 8000) {
+    await this.ensureBluetoothPermissions();
     this.setState('scanning');
     const seen = new Set<string>();
     this.manager.startDeviceScan(null, null, (error, dev) => {
@@ -82,6 +81,22 @@ export class RealBleService implements BleService {
     this.stopScan();
   }
 
+  private async ensureBluetoothPermissions() {
+    if (Platform.OS !== 'android') return;
+
+    const permissions =
+      Number(Platform.Version) >= 31
+        ? [
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+          ]
+        : [PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION];
+    const results = await PermissionsAndroid.requestMultiple(permissions);
+    if (permissions.some((permission) => results[permission] !== PermissionsAndroid.RESULTS.GRANTED)) {
+      throw new Error('กรุณาอนุญาตสิทธิ์ Bluetooth เพื่อค้นหานาฬิกา');
+    }
+  }
+
   stopScan() {
     this.manager.stopDeviceScan();
     if (this.state === 'scanning') this.setState('idle');
@@ -94,13 +109,25 @@ export class RealBleService implements BleService {
       await dev.discoverAllServicesAndCharacteristics();
       this.device = dev;
       dev.onDisconnected(() => {
-        this.healthSub?.remove();
-        this.healthSub = null;
+        this.fallSub?.remove();
+        this.fallSub = null;
         this.device = null;
         this.setState('disconnected');
       });
+      this.fallSub = dev.monitorCharacteristicForService(
+        BLE_PROFILE.service,
+        BLE_PROFILE.characteristics.fall,
+        (error, characteristic) => {
+          if (error) {
+            console.error('รับการแจ้งเตือน FALL จากนาฬิกาไม่สำเร็จ', error);
+            return;
+          }
+          if (!characteristic?.value) return;
+          const message = String.fromCharCode(...b64ToBytes(characteristic.value));
+          if (message === 'FALL') this.fallListeners.forEach((listener) => listener());
+        },
+      );
       this.setState('connected');
-      this.startHealthMonitor();
     } catch (e) {
       this.setState('error');
       throw e;
@@ -108,36 +135,28 @@ export class RealBleService implements BleService {
   }
 
   async disconnect() {
-    this.healthSub?.remove();
-    this.healthSub = null;
+    this.fallSub?.remove();
+    this.fallSub = null;
     if (this.device) await this.manager.cancelDeviceConnection(this.device.id).catch(() => undefined);
     this.device = null;
     this.setState('disconnected');
   }
 
-  subscribeHealth(cb: (s: HealthSample) => void) {
-    this.healthListeners.add(cb);
-    return () => this.healthListeners.delete(cb);
+  async syncClock() {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, '0');
+    const value = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    await this.write(BLE_PROFILE.characteristics.clock, utf8(value));
   }
 
-  private startHealthMonitor() {
-    if (!this.device) return;
-    this.healthSub = this.device.monitorCharacteristicForService(
-      BLE_PROFILE.service,
-      BLE_PROFILE.characteristics.health,
-      (error, ch) => {
-        if (error || !ch?.value) return;
-        const b = b64ToBytes(ch.value);
-        // TODO(protocol): placeholder = [hr, spo2, stepsHi, stepsLo]
-        const sample: HealthSample = {
-          heartRate: b[0],
-          spo2: b[1],
-          steps: ((b[2] ?? 0) << 8) | (b[3] ?? 0),
-          timestamp: Date.now(),
-        };
-        this.healthListeners.forEach((l) => l(sample));
-      },
-    );
+  subscribeHealth(_cb: (s: HealthSample) => void) {
+    // The current watch firmware does not publish HR, SpO2, or step data over BLE.
+    return () => {};
+  }
+
+  subscribeFallAlert(cb: () => void) {
+    this.fallListeners.add(cb);
+    return () => this.fallListeners.delete(cb);
   }
 
   private async write(characteristic: string, bytes: number[]) {
@@ -149,12 +168,11 @@ export class RealBleService implements BleService {
     );
   }
 
-  async syncMedicationAlarms(alarms: MedicationAlarm[]) {
-    // TODO(protocol): placeholder = JSON UTF-8
-    await this.write(BLE_PROFILE.characteristics.medication, utf8(JSON.stringify(alarms)));
+  async syncMedicationAlarms(_alarms: MedicationAlarm[]) {
+    throw new Error('เฟิร์มแวร์ SmartWatch ยังไม่รองรับการส่งตารางเตือนยา');
   }
 
-  async applySettings(settings: WatchSettings) {
-    await this.write(BLE_PROFILE.characteristics.settings, utf8(JSON.stringify(settings)));
+  async applySettings(_settings: WatchSettings) {
+    throw new Error('เฟิร์มแวร์ SmartWatch ยังไม่รองรับการตั้งค่าผ่าน BLE');
   }
 }

@@ -85,7 +85,7 @@ kit-gle/
   - Frontend: token เก็บใน SecureStore (มือถือ) / localStorage (เว็บ), เปิดแอปตรวจ token กับ `/auth/me`; `(tabs)` ต้องล็อกอิน, `(auth)` ล็อกอินแล้วจะเด้งไป home; ผู้ใช้ใหม่/ไม่เคยใช้เข้าทาง Splash → Sign In → "Register HERE!"
   - มือถือต้องใช้ `npx expo start --go` (เพราะมี expo-dev-client อยู่ ถ้าไม่ใส่ QR จะเป็นของ dev build) และตั้ง `EXPO_PUBLIC_API_URL` เป็น IP ของคอม (ไม่ใช่ localhost); เครื่องผู้ใช้มี Radmin VPN ให้ตั้ง `$env:REACT_NATIVE_PACKAGER_HOSTNAME` เป็น IP Wi-Fi จริงกัน Expo เลือกผิด
 - ปุ่มออกจากระบบชั่วคราวอยู่ที่หน้าโปรไฟล์ (ไว้ทดสอบ) — ย้ายตามดีไซน์จริงภายหลัง
-- ชั้น BLE: interface เดียว (`BleService`) สลับ Mock/Real ได้ด้วย `EXPO_PUBLIC_USE_MOCK_BLE`
+- ชั้น BLE: interface เดียว (`BleService`) สลับ Mock/Real ได้ด้วย `EXPO_PUBLIC_USE_MOCK_BLE`; Real BLE ใช้ UUID/name จาก firmware ESP32-C3 ใน `frontend/src/services/ble/protocol.ts` และ sync เวลาเมื่อเชื่อมต่อ
 - Backend: auth (register/login), devices (models + BLE profile), health records, family link (invite/respond/watching/ดูข้อมูลพร้อมตรวจสิทธิ์)
 - SQL 2 ฐาน + seed รุ่น `KITGLE-V1`
 - **ตรวจ build/typecheck (2026-11-15)**: frontend/backend typecheck ผ่าน, backend production build ผ่าน, Expo web production export ผ่าน, `expo install --check` ผ่าน และ backend `/healthz` ตอบ HTTP 200; แก้ชนิด ref ของช่องกรอก, custom tab bar และ StyleSheet ให้เข้ากับ Expo/RN ปัจจุบัน
@@ -96,16 +96,17 @@ kit-gle/
 3. Backend: เชื่อม `medication_logs` จากนาฬิกาหลังมี BLE protocol — สถานะที่บันทึกจากแอปผ่าน MediRemind แล้ว; refresh token, rate limit, migration tool (ตอนนี้ใช้ไฟล์ .sql ตรง ๆ)
 4. Auth ส่วนที่ยังขาด: **Facebook/Google login** (ปุ่มมีแต่ยังแจ้ง "ยังไม่เปิดใช้งาน" — ต้องมี Facebook App / Google OAuth Client ID ก่อน), **ลืมรหัสผ่าน / ยืนยันอีเมล** (ไม่มีใน Figma → ถามเจ้าของก่อน), refresh token, เนื้อหา Privacy Policy จริง (ตอนนี้เป็นฉบับร่างใน `src/content/privacyPolicy.ts` ต้องให้ผู้รับผิดชอบ/กฎหมายตรวจ; แก้แล้วเปลี่ยน PRIVACY_VERSION ทั้งสองฝั่งให้ตรงกัน)
 5. ฟอนต์จริง (expo-font), โลโก้จริงแทน NudMedi, app icon/splash ของ native (ตอนนี้ icon = logo.png)
-6. ขอสิทธิ์ BLE runtime บน Android 12+ (`BLUETOOTH_SCAN/CONNECT`) — ใส่ใน app.json แล้ว แต่ยังไม่มี flow ขอสิทธิ์ใน UI
-7. เทสต์ (unit/e2e), CI, EAS Build config (`eas.json`) สำหรับปล่อยสโตร์
+6. เพิ่ม BLE characteristic ใน firmware สำหรับส่ง HR/SpO2/steps และรับตารางเตือนยา/ตั้งค่า — ปัจจุบันแอปรับ FALL notify แล้ว แต่ยังไม่ถอดรหัส IMU binary stream
+7. EAS `preview` เปิด cleartext HTTP สำหรับ backend ใน LAN เท่านั้น; production ต้องใช้ HTTPS. กำหนด URL ของ backend ที่ Android เข้าถึงได้ใน EAS environment (`EXPO_PUBLIC_API_URL`), ล็อกอิน/ผูกโปรเจกต์ Expo แล้วสร้าง APK ทดสอบด้วย `eas build --platform android --profile preview`
+8. เพิ่มเทสต์ (unit/e2e), CI และ EAS profile สำหรับ app bundle เมื่อต้องการปล่อยสโตร์
 
 ## 6. สิ่งที่ "ยังไม่ได้ตรวจสอบ" (สำคัญ)
 ตรวจแล้วตามรายการในข้อ 5 แต่ **ระบบ auth ยังไม่เคยทดสอบกับ MySQL จริง** — ต้องรัน SQL → backend → แอป แล้วลองสมัคร/ออก/ล็อกอิน/ปิดเปิดแอป (ดูข้อ 7)
 - ยังไม่มี automated unit/e2e test scripts ใน frontend/backend; การตรวจครั้งนี้เป็น typecheck, build/export และ health endpoint smoke test
-- ยังไม่ได้ build/ทดสอบบนอุปกรณ์ iOS/Android จริง; BLE, permission flow และการเชื่อมต่อฐานข้อมูลต้องทดสอบแยกก่อนปล่อย store
+- ยังไม่ได้ build/ทดสอบบนอุปกรณ์ iOS/Android จริง; มี runtime permission request สำหรับ BLE บน Android แล้ว แต่ยังต้องทดสอบบนเครื่องจริงและกับ firmware
 - TypeScript 6 **ลบ `baseUrl` แล้ว** → `frontend/tsconfig.json` ใช้ `paths: {"@/*": ["./src/*"]}` แบบไม่มี baseUrl อย่าเติมกลับ
 - `npx expo install --check` ผ่าน; ยังไม่รัน `npx expo install --fix` เพราะไม่มี dependency mismatch
-- จุดเสี่ยงที่ควรเช็กก่อน: BLE UUID/payload ยังเป็น placeholder, permission flow บน Android 12+, การเชื่อม MySQL จริง, และภาพ/แอนิเมชัน Splash บนเว็บเทียบ Figma
+- จุดเสี่ยงที่ควรเช็กก่อน: ทดสอบ BLE UUID/payload กับ firmware จริง, เพิ่มข้อมูลสุขภาพ/ยาใน GATT เมื่อ firmware รองรับ, การเชื่อม MySQL จริง, และภาพ/แอนิเมชัน Splash บนเว็บเทียบ Figma
 - Splash ยังไม่ได้ดูผลจริงเทียบ Figma → ปรับจังหวะ/รูปทรงก้อนใน `BLOBS` และ `theme/tokens.ts › timing`
 
 ## 7. วิธีรัน
@@ -120,7 +121,8 @@ npm install && npm run dev           # http://localhost:4000/api/ping
 cd frontend && cp .env.example .env   # EXPO_PUBLIC_API_URL: เว็บ=http://localhost:4000 | Android emulator=http://10.0.2.2:4000 | มือถือจริง=http://<IP คอม>:4000
 npm install && npx expo install --fix
 npm run web                          # ทดสอบบนเว็บ (BLE = จำลอง)
-npx expo run:android                 # มือถือ + BLE จริง (dev build) ตั้ง EXPO_PUBLIC_USE_MOCK_BLE=false
+npx expo run:android                 # build/install dev app ในเครื่องที่มี Android SDK + JDK และต่อมือถือไว้
+# APK ทดสอบผ่าน EAS: ตั้ง EXPO_PUBLIC_API_URL ใน EAS environment ให้เป็น URL ที่มือถือเข้าถึงได้ แล้วรัน eas build --platform android --profile preview
 ```
 มือถือจริงต่อ backend: ตั้ง `EXPO_PUBLIC_API_URL` เป็น IP เครื่องคอมในวง Wi-Fi เดียวกัน และเพิ่ม origin ใน `CORS_ORIGINS` ของ backend
 

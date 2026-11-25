@@ -123,17 +123,16 @@ export function getNextMedicationDose(
   );
 }
 
-/** ส่งตารางเตือนยาไปนาฬิกา (ทำเมื่อเชื่อมต่ออยู่เท่านั้น ไม่สำเร็จไม่เป็นไร — ซิงก์ใหม่ได้ภายหลัง) */
+/** ตารางเตือนยาจะซิงก์ได้เมื่อ firmware เพิ่ม BLE characteristic สำหรับคำสั่งยา */
 async function syncToWatch(list: Medication[]) {
   try {
     const ble = getBleService();
-    if (ble.getState() !== 'connected') return;
-    // TODO(protocol): MedicationAlarm ยังไม่รวม "วันที่ต้องกิน" — เพิ่มเมื่อได้ BLE protocol จริง
+    if (!ble.isMock || ble.getState() !== 'connected') return;
     await ble.syncMedicationAlarms(
       list.map((m) => ({ id: String(m.id), label: m.name, time: m.timeOfDay, enabled: m.enabled })),
     );
-  } catch {
-    /* ignore */
+  } catch (error) {
+    console.error('ไม่สามารถซิงก์ตารางยาไปยังนาฬิกาได้', error);
   }
 }
 

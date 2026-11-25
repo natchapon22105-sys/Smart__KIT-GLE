@@ -53,6 +53,12 @@ export class MockBleService implements BleService {
     this.setState('disconnected');
   }
 
+  async syncClock() {}
+
+  subscribeFallAlert(_cb: () => void) {
+    return () => {};
+  }
+
   subscribeHealth(cb: (s: HealthSample) => void) {
     this.healthListeners.add(cb);
     return () => this.healthListeners.delete(cb);
